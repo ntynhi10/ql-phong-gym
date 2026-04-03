@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gym Login</title>
+    <link href="/output.css" rel="stylesheet">
+</head>
+
+<body class="h-screen bg-cover bg-center flex items-center justify-center"
+      style="background-image: url('/img/background-gym.png');">
+
+    <!-- CARD -->
+    <div class="bg-white/70 rounded-3xl shadow-xl 
+                wx-full max-w-md mx-auto p-6 md:p-8 text-center">
+
+        <div class="flex justify-center mb-6">
+            <img 
+                src="/img/logo-login.png" 
+                alt="logo"
+                class="w-70 md:w-80"
+            >
+        </div>
+        <!-- FORM -->
+        <form id="loginForm" class="space-y-4">
+
+            <!-- USERNAME -->
+            <div class="flex items-center bg-white/90 rounded-full px-4 py-3 w-[250px] md:w-[350px] mx-auto">
+                <input 
+                    id="username"
+                    type="text"
+                    placeholder="Tên đăng nhập"
+                    class="w-full bg-transparent outline-none text-gray-600 text-sm md:text-base placeholder:italic"
+                >
+            </div>
+
+            <!-- PASSWORD -->
+            <div class="flex items-center bg-white/90 rounded-full px-4 py-3 w-[250px] md:w-[350px] mx-auto">
+
+                <input 
+                    id="password"
+                    type="password"
+                    placeholder="Mật khẩu"
+                    class="w-full bg-transparent outline-none text-gray-600 text-sm md:text-base placeholder:italic"
+                >
+            </div>
+
+            <!-- FORGOT -->
+            <div class="text-right text-sm text-gray-600 font-semibold italic">
+                Quên mật khẩu?
+            </div>
+            <p id="message" class="text-red-600 font-semibold mt-2 text-center hidden"></p>
+            <!-- BUTTON -->
+            <button 
+                type="submit"
+                class="w-[120px] md:w-[150px] bg-primaryBtn hover:bg-primaryHover text-white 
+                       px-3 py-3 rounded-full text-base md:text-lg font-semibold 
+                       shadow-[0px_4px_10px_rgba(0,0,0,0.25)] transition duration-300"
+            >
+                Đăng nhập
+            </button>
+
+        </form>
+
+    </div>
+
+    <script src="/js/login.js"></script>
+
+</body>
+</html>
