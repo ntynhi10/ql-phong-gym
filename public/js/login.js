@@ -24,7 +24,6 @@ form.addEventListener("submit", async (e) => {
             return;
         }
 
-        // clear message nếu login đúng
         message.classList.add("hidden");
 
         window.location.href = "/dashboard";

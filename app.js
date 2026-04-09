@@ -26,6 +26,18 @@ app.get("/", (req, res) => {
 app.get("/dashboard", (req, res) => {
     res.sendFile(path.join(__dirname, "public", "dashboard.html"));
 });
+
+app.get("/customer", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "customer.html"));
+});
+
+app.get("/package", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "package.html"));
+});
+
+app.get("/crm", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "crm.html"));
+});
 app.listen(3000, () => {
     console.log("http://localhost:3000");
 });
