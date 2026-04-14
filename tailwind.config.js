@@ -13,7 +13,10 @@ module.exports = {
         glass: "rgba(255,255,255,0.7)",
 
         textMain: "#374151",
-        textSub: "#8F8E8E"
+        textSub: "#8F8E8E",
+
+        checkinBg: "#B8D3F8",
+        checkinHover: "#9BBEF5"
       }
     }
   },
