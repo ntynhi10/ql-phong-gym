@@ -1,13 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="/output.css">
-    <title>CRM</title>
+  <meta charset="UTF-8">
+  <title>CRM</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="/output.css">
 </head>
+
 <body>
-    <a>Hello crm</a>
-    <script src="/js/crm.js"></script>
+  <div id="app"></div>
+
+  <script src="/js/components/sidebar.js"></script>
+  <script src="/js/components/layout.js"></script>
+  <script src="/js/crm.js"></script>
+
+  <script>
+    document.getElementById("app").innerHTML =
+      renderLayout(renderCRM());
+      initMenuEvent();
+  </script>
+  
 </body>
 </html>
