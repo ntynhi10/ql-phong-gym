@@ -1,8 +1,8 @@
 const menus = [
-  { link: "dashboard", label: "Dashboard" },
-  { link: "customer", label: "Quản lý khách hàng" },
-  { link: "package", label: "Quản lý gói tập" },
-  { link: "crm", label: "CRM" },
+  { link: "dashboard", label: "Dashboard", icon: "fa-border-all" },
+  { link: "customer", label: "Quản lý khách hàng", icon: "fa-user-group" },
+  { link: "package", label: "Quản lý gói tập", icon: "fa-box-open" },
+  { link: "crm", label: "CRM", icon: "fa-user" },
 ];
 function renderSidebar() {
   const path = window.location.pathname;
@@ -14,18 +14,18 @@ function renderSidebar() {
       <div class="px-6 py-5">
         <img src="/img/logo.png" 
             alt="logo"
-            class="w-56">
+            class="w-42">
       </div>
 
       <!-- AVATAR -->
       <div class="flex flex-col items-center mt-4">
-        <div class="w-24 h-24 bg-white rounded-full"></div>
-        <p class="mt-4 text-sm font-medium">Tên nhân viên/Admin</p>
+        <div class="w-26 h-26 bg-white rounded-full"></div>
+        <p class="mt-8 text-sm font-semibold tracking-wide">Tên nhân viên/Admin</p>
       </div>
 
       <!-- MENU -->
       <div class="mt-8 flex flex-col gap-2 px-3">
-        ${menus.map(m => menuItem(m.link, m.label, path)).join("")}
+        ${menus.map(m => menuItem(m.link, m.label, path, false, m.icon)).join("")}
 
       </div>
 
@@ -34,7 +34,7 @@ function renderSidebar() {
         <button
           id="logoutBtn"
           class="w-[70%] max-w-[150px] bg-primaryBtn hover:bg-primaryHover text-white 
-                       px-3 py-3 rounded-xl text-base md:text-lg font-semibold items-center
+                       px-2 py-3 rounded-xl text-base md:text-lg font-semibold items-center
                        shadow-[0px_4px_10px_rgba(0,0,0,0.25)] transition duration-300">
           Đăng xuất
         </button>
@@ -45,27 +45,31 @@ function renderSidebar() {
 }
 
 // helper tạo menu item
-function menuItem(link, label, path, isMobile = false) {
+function menuItem(link, label, path, isMobile = false, icon = "") {
   const currentPage = path.split("/").pop();
   const isActive = currentPage === link;
 
   return `
     <a href="/${link}"
       class="
-        block px-4 py-3 rounded-l-full text-sm font-medium transition
-       ${
-        isMobile
+        block px-4 py-3 rounded-l-full text-sm font-medium tracking-wide transition
+        ${
+          isMobile
             ? "hover:bg-gray-100 rounded-md"
-            :isActive 
-            ? "bg-[#F4F7FC] text-[#143F76] rounded-l-full ml-3" 
+            : isActive
+            ? "bg-[#F4F7FC] text-[#143F76] rounded-l-full ml-3 font-semibold"
             : "hover:bg-primaryBtn rounded-xl"
-          }
+        }
       ">
-      ${label}
+      
+      <div class="flex items-center gap-3">
+        <i class="fa-solid ${icon} ${isActive ? "text-[#143F76]" : "text-white"} text-[16px]"></i>
+        <span>${label}</span>
+      </div>
+
     </a>
   `;
 }
-
 // logout tạm (frontend)
 function handleLogout() {
   window.location.href = "/login";

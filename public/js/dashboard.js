@@ -155,7 +155,7 @@ function renderPieChart(data) {
         backgroundColor: [
           "#EF4444", 
           "#F97316", 
-          "#692cf8", 
+          "#93C5FD", 
           "#3B82F6"  
         ],
         borderWidth: 0,
@@ -191,14 +191,13 @@ function renderPieChart(data) {
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
 
-        ctx.font = "bold 20px sans-serif";
-        ctx.fillStyle = "#232323";
-        ctx.fillText(pieData.total, width / 2, height / 2 - 8);
+        ctx.font = "600 22px Inter";
+        ctx.fillStyle = "#111827";
+        ctx.fillText(pieData.total, width / 2, height / 2 - 6);
 
-        ctx.font = "14px sans-serif";
-        ctx.fillStyle = "#6b7280";
-        ctx.fillText("Hội viên", width / 2, height / 2 + 12);
-
+        ctx.font = "400 13px Inter";
+        ctx.fillStyle = "#6B7280";
+        ctx.fillText("Hội viên", width / 2, height / 2 + 14);
         ctx.restore();
       }
     }]
@@ -209,7 +208,7 @@ function renderLegend() {
   const items = [
     { color: "#ef4444", label: "Hội viên hết hạn" },
     { color: "#f97316", label: "Hội viên sắp hết hạn" },
-    { color: "#692cf8", label: "Hội viên mới" },
+    { color: "#93C5FD", label: "Hội viên mới" },
     { color: "#3b82f6", label: "Hội viên thân thiết" }
   ];
 

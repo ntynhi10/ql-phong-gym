@@ -60,7 +60,7 @@ function renderTableWithPaging(columns, data) {
     <div class="bg-white shadow p-4">
 
       <!-- HEADER -->
-      <div class="bg-[#E4EEFC] px-4 py-3 flex gap-4 font-medium rounded-xl">
+      <div class="bg-[#E4EEFC] px-4 py-3 flex gap-4 text-[14px] font-semibold rounded-xl">
         ${columns.map(col => `
           <div class="${col.width}">
             ${col.label}
@@ -71,7 +71,7 @@ function renderTableWithPaging(columns, data) {
       <!-- ROW -->
       <div>
         ${pagedData.map((item, index) => `
-          <div class="flex items-center gap-4 border-b border-[#B8D3F8] h-12 px-4">
+          <div class="flex items-center gap-4 border-b border-[#B8D3F8] h-12 px-4 text-[14px]">
 
             ${columns.map(col => `
               <div class="${col.width} ${col.key === null ? "flex justify-center items-center" : ""}">
@@ -140,7 +140,7 @@ function changePage(page) {
 function renderCRM() {
   return `
 
-    <div class="p-2">
+    <div class="p-2 ">
 
       <!-- TOP BAR -->
       <div class="flex justify-between items-center">
@@ -149,12 +149,12 @@ function renderCRM() {
         <div class="flex relative ml-4 -mb-[12px]">
 
           <button id="tab-guest" onclick="switchTab('guest')"
-            class="px-5 py-2 rounded-t-xl bg-white text-black font-semibold">
+            class="px-4 py-1.5 rounded-t-xl bg-white text-black text-[16px] font-medium">
             Khách vãng lai
           </button>
 
           <button id="tab-member" onclick="switchTab('member')"
-            class="px-5 py-2 rounded-t-xl -ml-[1px] bg-gray-200 text-gray-600 font-semibold">
+            class="px-4 py-2 rounded-t-xl -ml-[1px] bg-gray-200 text-gray-500 text-[16px] font-medium">
             Hội viên
           </button>
 
@@ -162,13 +162,13 @@ function renderCRM() {
 
         <!-- SEARCH -->
         <div class="mr-4">
-          <div class="flex w-[320px] h-[36px] border border-black rounded-full overflow-hidden">
+          <div class="flex w-[320px] h-[36px] border border-[#2B6DD9] rounded-full overflow-hidden">
 
             <input 
               type="text"
               id="searchInput"
               placeholder="Tìm kiếm khách hàng"
-              class="flex-1 px-4 outline-none italic text-gray-400 text-sm"
+              class="flex-1 px-4 outline-none text-gray-600 text-sm placeholder:text-gray-400"
               onkeydown="handleEnter(event)"
             />
 
@@ -198,11 +198,11 @@ function renderCRM() {
 
     <div id="popup" class="fixed inset-0 bg-black/30 hidden flex items-center justify-center z-50">
 
-      <div class="bg-white rounded-2xl w-[500px] p-6 relative">
+      <div class="bg-white rounded-2xl w-[500px] p-6 relative shadow-xl">
 
         <!-- CLOSE -->
         <span onclick="closePopup()" 
-          class="absolute top-3 right-4 text-red-600 text-2xl cursor-pointer">✕</span>
+          class="absolute top-3 right-4 text-red-600 text-2xl cursor-pointer">×</span>
 
         <!-- CONTENT -->
         <div id="popupContent"></div>
@@ -258,29 +258,29 @@ function openEdit(index) {
   const item = data[index] || {};
 
   content.innerHTML = `
-    <h2 class="text-[#2B74D1] font-semibold mb-2">Ghi chú gần nhất:</h2>
+    <h2 class="text-[#1E40AF] font-semibold text-[14px] mb-2 tracking-wide">Ghi chú gần nhất:</h2>
 
-    <p class="mb-4 text-sm">
+    <p class="mb-4 text-[14px] text-gray-800 leading-relaxed ">
       ${item.noteDate || "20/9/2026"} - ${item.staff || "NV A"} <br/>
       ${item.lastNote || "Đã gọi tư vấn gói"}
     </p>
 
-    <h3 class="text-[#2B74D1] font-semibold mb-2">Ghi chú</h3>
+    <h3 class="text-[#1E40AF] font-semibold text-[14px] mb-2 tracking-wide">Ghi chú</h3>
 
     <textarea 
       id="noteInput"
-      class="w-full border rounded-xl p-3 h-[120px] mb-4 outline-none focus:ring-2 focus:ring-blue-300"
+      class="w-full border border-gray-200 rounded-xl p-3 h-[120px] mb-4 outline-none text-[14px] focus:ring-2 focus:ring-blue-400"
       placeholder="Nhập ghi chú..."
     >${item.note || ""}</textarea>
 
     <div class="flex justify-end gap-3">
       <button onclick="closePopup()" 
-        class="px-6 py-2 bg-[#AEB9CB] text-white rounded-xl hover:bg-gray-500">
+        class="px-5 py-2 bg-gray-300 text-gray-700 rounded-xl hover:bg-gray-400 text-[13px]">
         Hủy
       </button>
 
       <button onclick="saveNote(${index})"
-        class="px-6 py-2 bg-[#37C01B] text-white rounded-xl hover:bg-green-700">
+        class="px-5 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 text-[13px] font-medium">
         Lưu
       </button>
     </div>
@@ -299,70 +299,102 @@ function openDetail(index) {
 
   // ================== GUEST ==================
   if (currentType === "guest") {
-    content.innerHTML = `
-      <h2 class="text-[#2B74D1] font-semibold mb-4">Hoạt động gần đây</h2>
+  content.innerHTML = `
+    <h2 class="text-[#1E40AF] font-semibold text-[14px] mb-4 tracking-wide">
+      Hoạt động gần đây
+    </h2>
 
-      <div class="grid grid-cols-2 gap-y-3 text-sm">
+    <div class="grid grid-cols-2 gap-y-3 text-[14px] text-gray-600">
 
-        <div>Tổng số lần tập trong 30 ngày gần nhất</div>
-        <div class="text-right font-medium">${item.total || "7 ngày"}</div>
-
-        <div>Lần tập gần nhất</div>
-        <div class="text-right font-medium">${item.lastDate || "01/01/2026"}</div>
-
-        <div>Số ngày không hoạt động</div>
-        <div class="text-right font-medium">${item.inactiveDays || "15 ngày"}</div>
-
-      </div>
-    `;
-  }
-
-  // ================== MEMBER ==================
-  else {
-    content.innerHTML = `
-      <!-- GÓI -->
-      <h2 class="text-[#2B74D1] font-semibold mb-4">Thông tin gói hiện tại</h2>
-
-      <div class="grid grid-cols-2 gap-y-2 mb-4 text-sm border-b pb-3">
-        <div>Loại gói</div>
-        <div class="text-right font-medium">${item.package || "Gói tháng"}</div>
-
-        <div>Ngày bắt đầu</div>
-        <div class="text-right font-medium">${item.startDate || "01/01/2026"}</div>
-
-        <div>Ngày hết hạn</div>
-        <div class="text-right font-medium">${item.endDate || "30/01/2026"}</div>
+      <div>Tổng số lần tập trong 30 ngày gần nhất</div>
+      <div class="text-right font-medium text-gray-800">
+        ${item.total || "7 ngày"}
       </div>
 
-      <!-- HOẠT ĐỘNG -->
-      <h2 class="text-[#2B74D1] font-semibold mb-2">Hoạt động gần đây</h2>
-
-      <div class="grid grid-cols-2 gap-y-2 mb-4 text-sm border-b pb-3">
-        <div>Tổng số lần tập</div>
-        <div class="text-right font-medium">${item.total || "7 ngày"}</div>
-
-        <div>Lần gần nhất</div>
-        <div class="text-right font-medium">${item.lastDate || "01/01/2026"}</div>
-
-        <div>Không hoạt động</div>
-        <div class="text-right font-medium">${item.inactiveDays || "15 ngày"}</div>
+      <div>Lần tập gần nhất</div>
+      <div class="text-right font-medium text-gray-800">
+        ${item.lastDate || "01/01/2026"}
       </div>
 
-      <!-- FEEDBACK -->
-      <h2 class="text-[#2B74D1] font-semibold mb-2">Feedback gần nhất</h2>
-
-      <div class="grid grid-cols-2 gap-y-2 text-sm">
-        <div>Rating</div>
-        <div class="text-right text-[#FED81C]">${item.rating || "★★"}</div>
-
-        <div>Nội dung</div>
-        <div class="text-right font-semibold">${item.feedback || "Máy tập bị hỏng"}</div>
-
-        <div>Ngày</div>
-        <div class="text-right font-semibold">${item.feedbackDate || "30/5/2025"}</div>
+      <div>Số ngày không hoạt động</div>
+      <div class="text-right font-medium text-gray-800">
+        ${item.inactiveDays || "15 ngày"}
       </div>
-    `;
-  }
+
+    </div>
+  `;
+}
+
+// ================== MEMBER ==================
+else {
+  content.innerHTML = `
+    <!-- GÓI -->
+    <h2 class="text-[#1E40AF] font-semibold text-[14px] mb-2 tracking-wide">
+      Thông tin gói hiện tại
+    </h2>
+
+    <div class="grid grid-cols-2 gap-y-2 mb-4 text-[14px] text-gray-600 border-b border-gray-200 pb-3">
+      <div>Loại gói</div>
+      <div class="text-right font-medium text-gray-800">
+        ${item.package || "Gói tháng"}
+      </div>
+
+      <div>Ngày bắt đầu</div>
+      <div class="text-right font-medium text-gray-800">
+        ${item.startDate || "01/01/2026"}
+      </div>
+
+      <div>Ngày hết hạn</div>
+      <div class="text-right font-medium text-gray-800">
+        ${item.endDate || "30/01/2026"}
+      </div>
+    </div>
+
+    <!-- HOẠT ĐỘNG -->
+    <h2 class="text-[#1E40AF] font-semibold text-[14px] mb-2 tracking-wide">
+      Hoạt động gần đây
+    </h2>
+
+    <div class="grid grid-cols-2 gap-y-2 mb-4 text-[14px] text-gray-600 border-b border-gray-200 pb-3">
+      <div>Tổng số lần tập</div>
+      <div class="text-right font-medium text-gray-800">
+        ${item.total || "7 ngày"}
+      </div>
+
+      <div>Lần gần nhất</div>
+      <div class="text-right font-medium text-gray-800">
+        ${item.lastDate || "01/01/2026"}
+      </div>
+
+      <div>Không hoạt động</div>
+      <div class="text-right font-medium text-gray-800">
+        ${item.inactiveDays || "15 ngày"}
+      </div>
+    </div>
+
+    <!-- FEEDBACK -->
+    <h2 class="text-[#1E40AF] font-semibold text-[14px] mb-2 tracking-wide">
+      Feedback gần nhất
+    </h2>
+
+    <div class="grid grid-cols-2 gap-y-2 text-[14px] text-gray-600">
+      <div>Rating</div>
+      <div class="text-right text-yellow-400 font-medium">
+        ${item.rating || "★★"}
+      </div>
+
+      <div>Nội dung</div>
+      <div class="text-right font-medium text-gray-800">
+        ${item.feedback || "Máy tập bị hỏng"}
+      </div>
+
+      <div>Ngày</div>
+      <div class="text-right font-medium text-gray-800">
+        ${item.feedbackDate || "30/5/2025"}
+      </div>
+    </div>
+  `;
+}
 }
 
 function closePopup() {

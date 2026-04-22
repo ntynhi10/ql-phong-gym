@@ -20,6 +20,9 @@ module.exports = {
 
         textMain: "#374151",
         textSub: "#8F8E8E"
+      },
+      fontFamily: {
+        sans: ['Inter', 'sans-serif'],
       }
     }
   },
