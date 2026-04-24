@@ -6,7 +6,16 @@ const menus = [
 ];
 function renderSidebar() {
   const path = window.location.pathname;
+  const userStr = localStorage.getItem("user");
+  const user = userStr ? JSON.parse(userStr) : null;
 
+  // chọn ảnh theo role
+  let avatar = "/img/default.png";
+  if (user?.role === "admin") {
+    avatar = "/img/admin.png";
+  } else if (user?.role === "staff") {
+    avatar = "/img/staff.png";
+  }
   return `
     <div class="hidden md:flex w-[260px] h-screen bg-[#143F76] text-white flex-col">
 
@@ -19,8 +28,14 @@ function renderSidebar() {
 
       <!-- AVATAR -->
       <div class="flex flex-col items-center mt-4">
-        <div class="w-26 h-26 bg-white rounded-full"></div>
-        <p class="mt-8 text-sm font-semibold tracking-wide">Tên nhân viên/Admin</p>
+        <img 
+          src="${avatar}" 
+          alt="avatar"
+          class="w-32 h-32 rounded-full object-cover shadow"
+        />
+        <p class="mt-4 text-sm font-semibold tracking-wide">
+          ${user ? user.username.charAt(0).toUpperCase() + user.username.slice(1) : "Unknown"}
+        </p>
       </div>
 
       <!-- MENU -->
@@ -72,5 +87,7 @@ function menuItem(link, label, path, isMobile = false, icon = "") {
 }
 // logout tạm (frontend)
 function handleLogout() {
+  localStorage.removeItem("token");
+  localStorage.removeItem("user");
   window.location.href = "/login";
 }

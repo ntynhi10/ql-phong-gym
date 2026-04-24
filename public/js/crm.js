@@ -1,28 +1,71 @@
+
 let currentPage = 1;
 const pageSize = 10;
 let currentType = "guest";
+let currentData = [];
+let isSearching = false;
 
 const guestHeader = [
-  { label: "Tên", key: "name", width: "w-[220px]" },
-  { label: "SDT", key: "phone", width: "w-[180px]" },
-  { label: "Tổng số lần tập", key: "total", width: "min-w-[150px]" },
-  { label: "Lần gần nhất", key: "lastDate", width: "min-w-[160px]" },
-  { label: "Nhãn", key: "tag", width: "min-w-[120px]" },
+  { label: "Tên", key: "name", width: "w-[220px] " },
+  { label: "SDT", key: "phone", width: "w-[180px]  text-center",},
+  { label: "Tổng số lần tập", key: "total", width: "min-w-[150px]  text-center" },
+  { label: "Lần gần nhất", key: "lastDate", width: "min-w-[160px] text-center" },
+  { label: "Nhãn", key: "tag", width: "min-w-[120px] text-center" },
   { label: "Ghi chú", key: null, width: "w-[80px] text-center" },
   { label: "Chi tiết", key: null, width: "w-[80px] text-center" }
 ];
 
 const memberHeader = [
   { label: "Tên", key: "name", width: "w-[220px]" },
-  { label: "SDT", key: "phone", width: "w-[180px]" },
-  { label: "Loại gói", key: "package", width: "min-w-[150px]" },
-  { label: "Nhãn", key: "tag", width: "min-w-[140px]" },
-  { label: "Mức ưu tiên", key: "priority", width: "min-w-[110px]" },
+  { label: "SDT", key: "phone", width: "w-[180px]  text-center" },
+  { label: "Loại gói", key: "package", width: "min-w-[150px]  text-center" },
+  { label: "Nhãn", key: "tag", width: "min-w-[140px]  text-center" },
+  { label: "Mức ưu tiên", key: "priority", width: "min-w-[110px]  text-center" },
   { label: "Ghi chú", key: null, width: "w-[80px] text-center" },
   { label: "Chi tiết", key: null, width: "w-[80px] text-center" }
 ];
-const guestData = new Array(35).fill({});
-const memberData = new Array(22).fill({});
+
+let guestData = [];
+let memberData = [];
+
+document.addEventListener("DOMContentLoaded", () => {
+  const token = localStorage.getItem("token");
+
+  if (!token) {
+    window.location.href = "/login";
+    return;
+  }
+
+  document.getElementById("app").innerHTML =
+    renderLayout(renderCRM());
+
+  initMenuEvent();
+
+  fetchCRM();
+});
+
+async function fetchCRM() {
+  const token = localStorage.getItem("token");
+
+  try {
+    const res = await fetch("http://localhost:3000/api/crm", {
+      headers: {
+        Authorization: "Bearer " + token
+      }
+    });
+
+    const data = await res.json();
+
+    guestData = data.guest;
+    memberData = data.member;
+
+    renderTable();
+
+  } catch (err) {
+    console.error("Lỗi CRM:", err);
+  }
+}
+
 
 function paginate(data) {
   const start = (currentPage - 1) * pageSize;
@@ -70,30 +113,32 @@ function renderTableWithPaging(columns, data) {
 
       <!-- ROW -->
       <div>
-        ${pagedData.map((item, index) => `
-          <div class="flex items-center gap-4 border-b border-[#B8D3F8] h-12 px-4 text-[14px]">
+        ${pagedData.map((item, index) => {
 
-            ${columns.map(col => `
-              <div class="${col.width} ${col.key === null ? "flex justify-center items-center" : ""}">
-                
-                ${
-                  col.label === "Ghi chú"
-                  ? `<img src="img/note-icon.png" 
-                          class="w-5 h-5 cursor-pointer"
-                          onclick="openEdit(${index})">`
+          return `
+            <div class="flex items-center gap-4 border-b border-[#B8D3F8] h-12 px-4 text-[14px]">
 
-                : col.label === "Chi tiết"
-                  ? `<img src="img/detail-icon.png" 
-                          class="w-6 h-6 cursor-pointer"
-                          onclick="openDetail(${index})">`
-                  : (item[col.key] || "")
-                }
-              </div>
-          
-            `).join("")}
-          </div>
-        `).join("")}
-      </div>         
+              ${columns.map(col => `
+                <div class="${col.width} ${col.key === null ? "flex justify-center items-center" : ""}">
+                  
+                  ${
+                    col.label === "Ghi chú"
+                      ? `<img src="img/note-icon.png" 
+                              class="w-5 h-5 cursor-pointer"
+                              onclick="openEdit(${index})">`
+
+                    : col.label === "Chi tiết"
+                      ? `<img src="img/detail-icon.png" 
+                              class="w-6 h-6 cursor-pointer"
+                              onclick="openDetail(${index})">`
+                      : (item[col.key] || "")
+                  }
+                </div>
+              `).join("")}
+
+            </div>
+          `;
+        }).join("")}
       <!-- PAGINATION -->
       ${renderPagination(data.length)}
 
@@ -104,7 +149,7 @@ function renderTableWithPaging(columns, data) {
 function switchTab(type) {
   currentType = type;
   currentPage = 1;
-
+  currentData = [];
   // đổi màu tab
   const tabGuest = document.getElementById("tab-guest");
   const tabMember = document.getElementById("tab-member");
@@ -122,13 +167,17 @@ function switchTab(type) {
     tabGuest.classList.remove("bg-white", "text-black");
     tabGuest.classList.add("bg-gray-200", "text-gray-600");
   }
-
+  isSearching = false;
   // render lại table
   renderTable();
+  
 }
 
 function changePage(page) {
-  const data = currentType === "guest" ? guestData : memberData;
+  const data = isSearching
+  ? currentData
+  : (currentType === "guest" ? guestData : memberData);
+
   const totalPages = Math.ceil(data.length / pageSize);
 
   if (page < 1 || page > totalPages) return;
@@ -216,11 +265,14 @@ function renderCRM() {
 function renderTable() {
   const tableContainer = document.getElementById("tableContainer");
 
-  if (currentType === "guest") {
-    tableContainer.innerHTML = renderTableWithPaging(guestHeader, guestData);
-  } else {
-    tableContainer.innerHTML = renderTableWithPaging(memberHeader, memberData);
-  }
+  const data = isSearching
+    ? currentData
+    : (currentType === "guest" ? guestData : memberData);
+
+  tableContainer.innerHTML = renderTableWithPaging(
+    currentType === "guest" ? guestHeader : memberHeader,
+    data
+  );
 }
 
 function handleSearch() {
@@ -229,18 +281,20 @@ function handleSearch() {
     .value.toLowerCase();
 
   const data = currentType === "guest" ? guestData : memberData;
-
-  const filtered = data.filter(item =>
+  if (!keyword) {
+    isSearching = false;
+    currentData = [];
+  } else {
+     currentData = data.filter(item =>
     (item.name || "").toLowerCase().includes(keyword) ||
-    (item.phone || "").includes(keyword)
-  );
+    (item.phone || "").includes(keyword));
+    isSearching = true;
+  }
+  currentPage = 1;
 
-  document.getElementById("tableContainer").innerHTML =
-    renderTableWithPaging(
-      currentType === "guest" ? guestHeader : memberHeader,
-      filtered
-    );
+  renderTable();
 }
+
 function handleEnter(e) {
   if (e.key === "Enter") {
     handleSearch();
@@ -254,8 +308,12 @@ function openEdit(index) {
   popup.classList.remove("hidden");
 
   // lấy data theo tab
-  const data = currentType === "guest" ? guestData : memberData;
-  const item = data[index] || {};
+  const data = isSearching
+  ? currentData
+  : (currentType === "guest" ? guestData : memberData);
+
+  const pagedData = paginate(data);
+  const item = pagedData[index] || {};
 
   content.innerHTML = `
     <h2 class="text-[#1E40AF] font-semibold text-[14px] mb-2 tracking-wide">Ghi chú gần nhất:</h2>
@@ -294,8 +352,12 @@ function openDetail(index) {
   popup.classList.remove("hidden");
 
   // lấy data theo tab
-  const data = currentType === "guest" ? guestData : memberData;
-  const item = data[index] || {};
+  const data = isSearching
+  ? currentData
+  : (currentType === "guest" ? guestData : memberData);
+
+  const pagedData = paginate(data);
+  const item = pagedData[index] || {};
 
   // ================== GUEST ==================
   if (currentType === "guest") {
@@ -308,17 +370,17 @@ function openDetail(index) {
 
       <div>Tổng số lần tập trong 30 ngày gần nhất</div>
       <div class="text-right font-medium text-gray-800">
-        ${item.total || "7 ngày"}
+        ${item.total || ""}
       </div>
 
       <div>Lần tập gần nhất</div>
       <div class="text-right font-medium text-gray-800">
-        ${item.lastDate || "01/01/2026"}
+        ${item.lastDate || ""}
       </div>
 
       <div>Số ngày không hoạt động</div>
       <div class="text-right font-medium text-gray-800">
-        ${item.inactiveDays || "15 ngày"}
+        ${item.inactiveDays || ""}
       </div>
 
     </div>
@@ -336,17 +398,17 @@ else {
     <div class="grid grid-cols-2 gap-y-2 mb-4 text-[14px] text-gray-600 border-b border-gray-200 pb-3">
       <div>Loại gói</div>
       <div class="text-right font-medium text-gray-800">
-        ${item.package || "Gói tháng"}
+        ${item.package || ""}
       </div>
 
       <div>Ngày bắt đầu</div>
       <div class="text-right font-medium text-gray-800">
-        ${item.startDate || "01/01/2026"}
+        ${item.startDate || ""}
       </div>
 
       <div>Ngày hết hạn</div>
       <div class="text-right font-medium text-gray-800">
-        ${item.endDate || "30/01/2026"}
+        ${item.endDate || ""}
       </div>
     </div>
 
@@ -358,17 +420,17 @@ else {
     <div class="grid grid-cols-2 gap-y-2 mb-4 text-[14px] text-gray-600 border-b border-gray-200 pb-3">
       <div>Tổng số lần tập</div>
       <div class="text-right font-medium text-gray-800">
-        ${item.total || "7 ngày"}
+        ${item.total || ""}
       </div>
 
       <div>Lần gần nhất</div>
       <div class="text-right font-medium text-gray-800">
-        ${item.lastDate || "01/01/2026"}
+        ${item.lastDate || ""}
       </div>
 
       <div>Không hoạt động</div>
       <div class="text-right font-medium text-gray-800">
-        ${item.inactiveDays || "15 ngày"}
+        ${item.inactiveDays || ""}
       </div>
     </div>
 
@@ -380,22 +442,23 @@ else {
     <div class="grid grid-cols-2 gap-y-2 text-[14px] text-gray-600">
       <div>Rating</div>
       <div class="text-right text-yellow-400 font-medium">
-        ${item.rating || "★★"}
+        ${item.rating || ""}
       </div>
 
       <div>Nội dung</div>
       <div class="text-right font-medium text-gray-800">
-        ${item.feedback || "Máy tập bị hỏng"}
+        ${item.feedback || ""}
       </div>
 
       <div>Ngày</div>
       <div class="text-right font-medium text-gray-800">
-        ${item.feedbackDate || "30/5/2025"}
+        ${item.feedbackDate || ""}
       </div>
     </div>
   `;
 }
 }
+
 
 function closePopup() {
   document.getElementById("popup").classList.add("hidden");

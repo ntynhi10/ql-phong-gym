@@ -17,4 +17,8 @@ const findUser = (username, password) => {
     );
 };
 
-module.exports = { findUser };
+const findById = (id) => {
+  return users.find(u => u.id === Number(id));
+};
+
+module.exports = { findUser, findById };

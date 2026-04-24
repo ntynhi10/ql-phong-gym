@@ -8,7 +8,7 @@ form.addEventListener("submit", async (e) => {
     const password = document.getElementById("password").value;
 
     try {
-        const res = await fetch("/api/login", {
+        const res = await fetch("http://localhost:3000/api/auth/login", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -23,7 +23,8 @@ form.addEventListener("submit", async (e) => {
             message.classList.remove("hidden");
             return;
         }
-
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("user", JSON.stringify(data.user));
         message.classList.add("hidden");
 
         window.location.href = "/dashboard";

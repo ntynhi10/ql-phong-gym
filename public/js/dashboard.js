@@ -3,6 +3,53 @@ let pieChartInstance = null;
 let barChartInstance = null;
 let intervalId;
 
+document.addEventListener("DOMContentLoaded", () => {
+  const token = localStorage.getItem("token");
+
+  if (!token) {
+    window.location.href = "/login";
+    return;
+  }
+  initDashboard();
+  fetchDashboard();
+  
+  if (intervalId) clearInterval(intervalId);
+  intervalId = setInterval(fetchDashboard, 5000);
+
+  document.getElementById("yearFilter").addEventListener("change", (e) => {
+    const currentYear = Number(e.target.value);
+
+  updateCharts();
+  });
+});
+async function fetchDashboard() {
+  const token = localStorage.getItem("token");
+
+  try {
+    const res = await fetch("http://localhost:3000/api/dashboard", {
+      headers: {
+        Authorization: "Bearer " + token
+      }
+    });
+
+    const data = await res.json();
+
+    pieData.counts = data.pie.counts;
+    pieData.total = data.pie.total;
+
+    barData.dataByYear = data.bar;
+
+    if (!barChartInstance) {
+      initDashboard();
+    }
+
+    updateCharts();
+
+  } catch (err) {
+    console.error("Lỗi gọi API", err);
+  }
+}
+
 function renderDashboard() {
   return `
     <div class="grid grid-cols-1 md:grid-cols-3 gap-14">
@@ -53,16 +100,6 @@ function renderDashboard() {
 }
 
 
-const pieData = {
-  labels: [
-    "Hội viên hết hạn",
-    "Hội viên sắp hết hạn",
-    "Hội viên mới",
-    "Hội viên thân thiết"
-  ],
-  counts: [18, 37, 40, 80],
-  total: 185
-};
 function convertToPercent(counts, total) {
   let sum = 0;
 
@@ -79,43 +116,6 @@ function convertToPercent(counts, total) {
 }
 
 
-const barData = {
-  labels: [
-    'T1','T2','T3','T4','T5','T6',
-    'T7','T8','T9','T10','T11','T12'
-  ],
-  dataByYear: {
-    2024: [20,30,40,50,60,70,80,90,20,30,40,50],
-    2025: [10,20,30,40,50,60,70,80,90,20,10,30],
-    2026: [80, 79, 180, 200, null, null, null, null, null, null, null, null]
-  }
-};
-function fakeFetchData() {
-  const now = new Date();
-  const currentYear = now.getFullYear();   
-  const currentMonth = now.getMonth();    
-
-  const newBar = { ...barData.dataByYear };
-
-  if (newBar[currentYear]) {
-    newBar[currentYear] = newBar[currentYear].map((v, i) => {
-      
-      if (i > currentMonth) return null;
-
-      if (i < currentMonth) return v;
-
-      return Math.round((v || 0) + Math.random() * 3);
-    });
-  }
-
-  return {
-    pie: {
-      counts: pieData.counts.map(c => c + Math.floor(Math.random() * 3))
-    },
-    bar: newBar
-  };
-}
-
 function updateCharts() {
 
   if (!pieChartInstance || !barChartInstance) return;
@@ -129,7 +129,24 @@ function updateCharts() {
   barChartInstance.update();
 }
 
+const pieData = {
+  labels: [
+    "Hội viên hết hạn",
+    "Hội viên sắp hết hạn",
+    "Hội viên mới",
+    "Hội viên thân thiết"
+  ],
+  counts: [],
+  total: 0
+};
 
+const barData = {
+  labels: [
+    'T1','T2','T3','T4','T5','T6',
+    'T7','T8','T9','T10','T11','T12'
+  ],
+  dataByYear: {}
+};
 function initDashboard() {
   const currentYear  = Number(document.getElementById("yearFilter").value);
 
@@ -254,25 +271,3 @@ function renderBarChart(data) {
   });
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-  initDashboard();
-  if (intervalId) clearInterval(intervalId);
-  intervalId = setInterval(() => {
-  const data = fakeFetchData();
-
-  pieData.counts = data.pie.counts;
-  pieData.total = pieData.counts.reduce((a, b) => a + b, 0);
-
-
-  barData.dataByYear = data.bar;
-
-  updateCharts();
-    }, 5000);
-
-  document.getElementById("yearFilter").addEventListener("change", (e) => {
-    const currentYear  = Number(e.target.value);
-
-    barChartInstance.data.datasets[0].data = barData.dataByYear[currentYear ];
-    barChartInstance.update();
-  });
-});

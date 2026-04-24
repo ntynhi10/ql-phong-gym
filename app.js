@@ -12,8 +12,8 @@ app.use(express.static(path.join(__dirname, "public")));
 
 // routes API
 const authRoutes = require("./routes/auth.route");
-app.use("/api", authRoutes);
-
+app.use("/api/auth", authRoutes);
+const { authenticate, authorize } = require("./middleware/auth.middleware");
 //route mở trang login
 app.get("/login", (req, res) => {
     res.sendFile(path.join(__dirname, "public", "login.html"));
@@ -38,6 +38,34 @@ app.get("/package", (req, res) => {
 app.get("/crm", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "crm.html"));
 });
+const dashboardRoutes = require("./routes/dashboard.route");
+app.use("/api/dashboard", dashboardRoutes);
+
+const packageRoutes = require("./routes/package.route");
+app.use("/api/packages", packageRoutes);
+
+const crmRoutes = require("./routes/crm.route");
+app.use("/api/crm", crmRoutes);
+
+// API test xác thực
+app.get("/test", authenticate, (req, res) => {
+  res.json({
+    message: "Qua authenticate",
+    user: req.user
+  });
+});
+
+
+// API test phân quyền
+app.get(
+  "/admin-test",
+  authenticate,
+  authorize(["admin"]),
+  (req, res) => {
+    res.json({ message: "Admin vào được" });
+  }
+);
+
 app.listen(3000, () => {
     console.log("http://localhost:3000");
 });
