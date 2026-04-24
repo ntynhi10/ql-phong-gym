@@ -1,13 +1,25 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="/output.css">
-    <title>Customer</title>
-</head>
-<body>
-    <a>Hello customer</a>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Quản lý khách hàng</title>
+    <link rel="stylesheet" href="/css/output.css" />
+  </head>
+
+  <body>
+    <div id="app"></div>
+
+    <script src="/js/components/sidebar.js"></script>
+    <script src="/js/components/layout.js"></script>
     <script src="/js/customer.js"></script>
-</body>
+
+    <script>
+      document.getElementById("app").innerHTML = renderLayout(renderCustomer());
+
+      initMenuEvent();
+      initCustomerEvent();
+      initCheckinEvent();
+    </script>
+  </body>
 </html>
+

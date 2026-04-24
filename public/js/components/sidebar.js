@@ -21,6 +21,7 @@ function renderSidebar() {
 
       <!-- LOGO -->
       <div class="px-6 py-5">
+
         <img src="/img/logo.png" 
             alt="logo"
             class="w-42">
@@ -28,6 +29,7 @@ function renderSidebar() {
 
       <!-- AVATAR -->
       <div class="flex flex-col items-center mt-4">
+
         <img 
           src="${avatar}" 
           alt="avatar"
@@ -40,7 +42,9 @@ function renderSidebar() {
 
       <!-- MENU -->
       <div class="mt-8 flex flex-col gap-2 px-3">
+
         ${menus.map(m => menuItem(m.link, m.label, path, false, m.icon)).join("")}
+
 
       </div>
 
