@@ -22,11 +22,7 @@ function renderLayout(content) {
 
           <!-- MENU -->
           <div class="flex flex-col gap-2">
-<<<<<<< HEAD
             ${menus.map(m => menuItem(m.link, m.label, path, true)).join("")}
-=======
-            ${menus.map((m) => menuItem(m.link, m.label, path, true)).join("")}
->>>>>>> feature/customer-management
           </div>
 
           <!-- LOGOUT -->
@@ -40,20 +36,12 @@ function renderLayout(content) {
         </div>
 
         <!-- KHUNG TRẮNG -->
-<<<<<<< HEAD
-        <div class="h-full bg-[#F4F7FC] rounded-3xl p-6 overflow-auto 
-=======
-        <div class="h-full bg-[#F4F7FC] rounded-3xl p-6 overflow-visible
->>>>>>> feature/customer-management
+
+        <div class="h-full bg-[#F4F7FC] rounded-3xl p-6 overflow-auto
           ml-2 mr-2 mt-8 md:ml-[-30px] md:mt-0">
           ${content}
         </div>
-
       </div>
-<<<<<<< HEAD
-
-    </div>
-=======
       <!--Thêm khách hàng-->
       <div id="modalAddCustomer"
              class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2
@@ -136,8 +124,6 @@ function renderLayout(content) {
 
     </div>
       
-      
->>>>>>> feature/customer-management
   `;
 }
 function initMenuEvent() {
@@ -160,11 +146,7 @@ function initMenuEvent() {
       handleLogout();
       return;
     }
-<<<<<<< HEAD
-    
-=======
 
->>>>>>> feature/customer-management
     if (menu.contains(e.target) && e.target.tagName === "A") {
       menu.classList.add("hidden");
       return;
@@ -174,8 +156,6 @@ function initMenuEvent() {
       menu.classList.add("hidden");
     }
   });
-<<<<<<< HEAD
+
 }
-=======
-}
->>>>>>> feature/customer-management
+
