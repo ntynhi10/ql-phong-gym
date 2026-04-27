@@ -38,6 +38,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   document.getElementById("app").innerHTML =
     renderLayout(renderCRM());
+  document.getElementById("modal-root").innerHTML = renderPopup();
 
   initMenuEvent();
 
@@ -125,12 +126,12 @@ function renderTableWithPaging(columns, data) {
                     col.label === "Ghi chú"
                       ? `<img src="img/note-icon.png" 
                               class="w-5 h-5 cursor-pointer"
-                              onclick="openEdit(${index})">`
+                              onclick="openEdit('${item.id}')">`
 
                     : col.label === "Chi tiết"
                       ? `<img src="img/detail-icon.png" 
                               class="w-6 h-6 cursor-pointer"
-                              onclick="openDetail(${index})">`
+                              onclick="openDetail('${item.id}')">`
                       : (item[col.key] || "")
                   }
                 </div>
@@ -245,20 +246,6 @@ function renderCRM() {
 
     </div>
 
-    <div id="popup" class="fixed inset-0 bg-black/30 hidden flex items-center justify-center z-50">
-
-      <div class="bg-white rounded-2xl w-[500px] p-6 relative shadow-xl">
-
-        <!-- CLOSE -->
-        <span onclick="closePopup()" 
-          class="absolute top-3 right-4 text-red-600 text-2xl cursor-pointer">×</span>
-
-        <!-- CONTENT -->
-        <div id="popupContent"></div>
-
-      </div>
-
-    </div>
   `;
 }
 
@@ -301,7 +288,7 @@ function handleEnter(e) {
   }
 }
 
-function openEdit(index) {
+function openEdit(id) {
   const popup = document.getElementById("popup");
   const content = document.getElementById("popupContent");
 
@@ -312,8 +299,12 @@ function openEdit(index) {
   ? currentData
   : (currentType === "guest" ? guestData : memberData);
 
-  const pagedData = paginate(data);
-  const item = pagedData[index] || {};
+  const item = data.find(x => x.id == id);
+
+  if (!item) {
+    showToast("Không tìm thấy khách hàng", "error");
+    return;
+  }
 
   content.innerHTML = `
     <h2 class="text-[#1E40AF] font-semibold text-[14px] mb-2 tracking-wide">Ghi chú gần nhất:</h2>
@@ -337,15 +328,42 @@ function openEdit(index) {
         Hủy
       </button>
 
-      <button onclick="saveNote(${index})"
+      <button onclick="saveNote('${item.id}')"
         class="px-5 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 text-[13px] font-medium">
         Lưu
       </button>
     </div>
   `;
 }
+function saveNote(id) {
+  try {
+    const note = document.getElementById("noteInput").value;
 
-function openDetail(index) {
+    const data = currentType === "guest" ? guestData : memberData;
+
+    const item = data.find(x => x.id == id);
+
+    if (!item) {
+      showToast("Không tìm thấy khách hàng", "error");
+      return;
+    }
+
+    // cập nhật
+    item.note = note;
+    item.noteDate = new Date().toLocaleDateString();
+    item.staff = "Bạn";
+
+    closePopup();
+    showToast("Lưu thành công", "success");
+
+    renderTable();
+
+  } catch (err) {
+    showToast("Có lỗi xảy ra", "error");
+  }
+}
+
+function openDetail(id) {
   const popup = document.getElementById("popup");
   const content = document.getElementById("popupContent");
 
@@ -356,8 +374,13 @@ function openDetail(index) {
   ? currentData
   : (currentType === "guest" ? guestData : memberData);
 
-  const pagedData = paginate(data);
-  const item = pagedData[index] || {};
+  const item = data.find(x => x.id == id);
+
+  if (!item) {
+    showToast("Không tìm thấy khách hàng", "error");
+    return;
+  }
+
 
   // ================== GUEST ==================
   if (currentType === "guest") {
@@ -459,6 +482,51 @@ else {
 }
 }
 
+function renderPopup() {
+  return `
+    <div id="popup" class="fixed inset-0 z-50 hidden">
+
+      <!-- OVERLAY -->
+      <div class="absolute inset-0 bg-black/40"
+        onclick="closePopup()"></div>
+
+      <!-- CENTER -->
+      <div class="flex items-center justify-center h-full pointer-events-none">
+
+        <div class="bg-white rounded-2xl w-[500px] p-6 relative shadow-xl pointer-events-auto">
+
+          <span onclick="closePopup()" 
+            class="absolute top-3 right-4 text-red-600 text-2xl cursor-pointer">
+            ×
+          </span>
+
+          <div id="popupContent"></div>
+
+        </div>
+
+      </div>
+    </div>
+  `;
+}
+function showToast(message, type = "success") {
+  const toast = document.createElement("div");
+
+  const bgColor = type === "success"
+    ? "bg-green-500"
+    : "bg-red-500";
+
+  toast.className = `
+    fixed top-5 right-5 z-50
+    px-5 py-3 rounded-xl shadow text-white
+    ${bgColor}
+  `;
+
+  toast.innerText = message;
+
+  document.body.appendChild(toast);
+
+  setTimeout(() => toast.remove(), 2000);
+}
 
 function closePopup() {
   document.getElementById("popup").classList.add("hidden");

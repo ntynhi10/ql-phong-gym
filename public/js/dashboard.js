@@ -10,6 +10,8 @@ document.addEventListener("DOMContentLoaded", () => {
     window.location.href = "/login";
     return;
   }
+  document.getElementById("app").innerHTML = renderLayout(renderDashboard());
+  initMenuEvent();
   initDashboard();
   fetchDashboard();
   
