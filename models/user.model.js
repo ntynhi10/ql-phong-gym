@@ -1,24 +1,15 @@
-const users = [
-    { id:1,
-      username: "admin",
-      password: "123",
-      role: "admin"
-    },
-    { id:2,
-      username: "staff",
-      password: "123",
-      role: "staff" 
-    }
-];
+const prisma = require("./prisma");
 
-const findUser = (username, password) => {
-    return users.find(
-        u => u.username === username && u.password === password
-    );
+const findUser = async (username, password) => {
+  return await prisma.user.findFirst({
+    where: { username, password },
+  });
 };
 
-const findById = (id) => {
-  return users.find(u => u.id === Number(id));
+const findById = async (id) => {
+  return await prisma.user.findUnique({
+    where: { id: Number(id) },
+  });
 };
 
 module.exports = { findUser, findById };

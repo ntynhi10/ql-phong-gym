@@ -1,15 +1,70 @@
-const getDashboard = (req, res) => {
-  res.json({
-    pie: {
-      counts: [18, 37, 40, 80],
-      total: 175
-    },
-    bar: {
-      2024: [20,30,40,50,60,70,80,90,20,30,40,50],
-      2025: [10,20,30,40,50,60,70,80,90,20,10,30],
-      2026: [80,79,180,200,null,null,null,null,null,null,null,null]
+const prisma = require("../models/prisma");
+
+const getDashboard = async (req, res) => {
+  try {
+    const now = new Date();
+
+    // 🥧 PIE DATA
+    const expired = await prisma.subscription.count({
+      where: { endDate: { lt: now } },
+    });
+
+    const expiringSoon = await prisma.subscription.count({
+      where: {
+        endDate: {
+          gte: now,
+          lte: new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000),
+        },
+      },
+    });
+
+    const newMembers = await prisma.customer.count({
+      where: {
+        createdAt: {
+          gte: new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000),
+        },
+      },
+    });
+
+    const total = await prisma.customer.count();
+
+    const loyal = total - expired - newMembers;
+
+    // 📊 BAR DATA (checkin theo tháng năm hiện tại)
+    const year = now.getFullYear();
+    const months = [];
+
+    for (let i = 0; i < 12; i++) {
+      const start = new Date(year, i, 1);
+      const end = new Date(year, i + 1, 1);
+
+      const count = await prisma.checkin.count({
+        where: {
+          checkinTime: {
+            gte: start,
+            lt: end,
+          },
+        },
+      });
+
+      months.push(count);
     }
-  });
+
+    res.json({
+      pie: {
+        counts: [expired, expiringSoon, newMembers, loyal],
+        total,
+      },
+      bar: {
+        [year]: months,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Lỗi server",
+      error: error.message,
+    });
+  }
 };
 
 module.exports = { getDashboard };

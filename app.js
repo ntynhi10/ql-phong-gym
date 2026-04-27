@@ -27,10 +27,6 @@ app.get("/dashboard", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "dashboard.html"));
 });
 
-app.get("/customer", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "customer.html"));
-});
-
 app.get("/package", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "package.html"));
 });
@@ -51,20 +47,14 @@ app.use("/api/crm", crmRoutes);
 app.get("/test", authenticate, (req, res) => {
   res.json({
     message: "Qua authenticate",
-    user: req.user
+    user: req.user,
   });
 });
 
-
 // API test phân quyền
-app.get(
-  "/admin-test",
-  authenticate,
-  authorize(["admin"]),
-  (req, res) => {
-    res.json({ message: "Admin vào được" });
-  }
-);
+app.get("/admin-test", authenticate, authorize(["admin"]), (req, res) => {
+  res.json({ message: "Admin vào được" });
+});
 
 app.listen(3000, () => {
   console.log("http://localhost:3000");
@@ -72,3 +62,15 @@ app.listen(3000, () => {
 app.get("/customer", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "customer.html"));
 });
+
+// API customer
+const customerRoutes = require("./routes/customer.routes");
+app.use("/api/customers", customerRoutes);
+
+// API subscription
+const subscriptionRoutes = require("./routes/subscription.routes");
+app.use("/api/subscriptions", subscriptionRoutes);
+
+// API checkin
+const checkinRoutes = require("./routes/checkin.routes");
+app.use("/api/checkin", checkinRoutes);

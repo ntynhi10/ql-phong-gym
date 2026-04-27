@@ -1,0 +1,116 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Gender {
+  male
+  female
+  other
+}
+
+enum SubscriptionStatus {
+  active
+  expired
+  cancelled
+}
+
+enum Role {
+  admin
+  staff
+} 
+
+model Customer {
+  id        Int      @id @default(autoincrement())
+  fullName  String
+  phone     String   @unique
+  gender    Gender
+  createdAt DateTime @default(now())
+
+  subscriptions Subscription[]
+  checkins      Checkin[]
+  feedbacks     Feedback[]
+  notes         CustomerNote[]
+}
+
+model Package {
+  id             Int      @id @default(autoincrement())
+  packageName    String
+  durationMonths Int
+  price          Float
+  description    String?
+  createdAt      DateTime @default(now())
+  isActive       Boolean  @default(true)
+
+  subscriptions  Subscription[]
+}
+
+model Subscription {
+  id         Int      @id @default(autoincrement())
+
+  startDate  DateTime
+  endDate    DateTime
+
+  status     SubscriptionStatus @default(active) // active / expired / cancelled
+
+  isPaid     Boolean  @default(false)
+  paidAt     DateTime?
+
+  customerId Int
+  packageId  Int
+
+  customer   Customer @relation(fields: [customerId], references: [id])
+  package    Package  @relation(fields: [packageId], references: [id])
+
+  createdAt  DateTime @default(now())
+
+  @@index([customerId])
+  @@index([packageId])
+}
+
+model Checkin {
+  id          Int      @id @default(autoincrement())
+  checkinTime DateTime @default(now())
+
+  customerId  Int
+  customer    Customer @relation(fields: [customerId], references: [id])
+
+  createdAt   DateTime @default(now())
+
+  @@index([customerId])
+}
+
+model Feedback {
+  id         Int      @id @default(autoincrement())
+  rating     Int
+  content    String?
+  createdAt  DateTime @default(now())
+
+  customerId Int
+  customer   Customer @relation(fields: [customerId], references: [id])
+
+  @@index([customerId])
+}
+
+model CustomerNote {
+  id         Int      @id @default(autoincrement())
+  note       String
+  createdAt  DateTime @default(now())
+
+  customerId Int
+  customer   Customer @relation(fields: [customerId], references: [id])
+
+  @@index([customerId])
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  username  String   @unique
+  password  String
+  role      Role   // admin / staff
+  createdAt DateTime @default(now())
+}
