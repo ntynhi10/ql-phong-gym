@@ -56,9 +56,6 @@ app.get("/admin-test", authenticate, authorize(["admin"]), (req, res) => {
   res.json({ message: "Admin vào được" });
 });
 
-app.listen(3000, () => {
-  console.log("http://localhost:3000");
-});
 app.get("/customer", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "customer.html"));
 });
@@ -74,3 +71,11 @@ app.use("/api/subscriptions", subscriptionRoutes);
 // API checkin
 const checkinRoutes = require("./routes/checkin.routes");
 app.use("/api/checkin", checkinRoutes);
+
+app.get("/customer-detail", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "customer-detail.html"));
+});
+
+app.listen(3000, () => {
+  console.log("http://localhost:3000");
+});

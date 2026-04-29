@@ -36,14 +36,20 @@ function renderSidebar() {
           class="w-32 h-32 rounded-full object-cover shadow"
         />
         <p class="mt-4 text-sm font-semibold tracking-wide">
-          ${user ? user.username.charAt(0).toUpperCase() + user.username.slice(1) : "Unknown"}
+          ${
+            user
+              ? user.username.charAt(0).toUpperCase() + user.username.slice(1)
+              : "Unknown"
+          }
         </p>
       </div>
 
       <!-- MENU -->
       <div class="mt-8 flex flex-col gap-2 px-3">
 
-        ${menus.map(m => menuItem(m.link, m.label, path, false, m.icon)).join("")}
+        ${menus
+          .map((m) => menuItem(m.link, m.label, path, false, m.icon))
+          .join("")}
 
 
       </div>
@@ -82,7 +88,9 @@ function menuItem(link, label, path, isMobile = false, icon = "") {
       ">
       
       <div class="flex items-center gap-3">
-        <i class="fa-solid ${icon} ${isActive ? "text-[#143F76]" : "text-white"} text-[16px]"></i>
+        <i class="fa-solid ${icon} ${
+    isActive ? "text-[#143F76]" : "text-white"
+  } text-[16px]"></i>
         <span>${label}</span>
       </div>
 

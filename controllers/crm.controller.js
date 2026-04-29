@@ -7,13 +7,13 @@ const getCRM = (req, res) => {
       total: Math.floor(Math.random() * 10),
       lastDate: "01/01/2026",
       tag: "Tiềm năng",
-      inactiveDays:Math.floor(Math.random() * 20),
+      inactiveDays: Math.floor(Math.random() * 20),
 
       noteDate: "20/9/2026",
       staff: "NV A",
       lastNote: "Đã gọi tư vấn",
-      note: ""
-  })),
+      note: "",
+    })),
     member: Array.from({ length: 22 }, (_, i) => ({
       id: "member_" + i,
       name: "Member " + (i + 1),
@@ -26,16 +26,16 @@ const getCRM = (req, res) => {
       staff: "NV A",
       lastNote: "Đã gọi tư vấn",
       note: "",
-      
+
       startDate: "01/01/2026",
       endDate: "30/01/2026",
       total: Math.floor(Math.random() * 10),
       lastDate: "01/01/2026",
-      inactiveDays:Math.floor(Math.random() * 20),
+      inactiveDays: Math.floor(Math.random() * 20),
       rating: "★★★",
       feedback: "Máy ổn",
-      feedbackDate: "30/5/2025"
-    }))
+      feedbackDate: "30/5/2025",
+    })),
   });
 };
 

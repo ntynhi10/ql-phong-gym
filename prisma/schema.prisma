@@ -55,16 +55,16 @@ model Subscription {
   startDate  DateTime
   endDate    DateTime
 
-  status     SubscriptionStatus @default(active) // active / expired / cancelled
+  status     SubscriptionStatus @default(active)
 
   isPaid     Boolean  @default(false)
   paidAt     DateTime?
 
   customerId Int
-  packageId  Int
+  packageId  Int?  
 
   customer   Customer @relation(fields: [customerId], references: [id])
-  package    Package  @relation(fields: [packageId], references: [id])
+  package    Package? @relation(fields: [packageId], references: [id]) 
 
   createdAt  DateTime @default(now())
 

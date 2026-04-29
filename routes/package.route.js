@@ -1,16 +1,16 @@
 const express = require("express");
 const router = express.Router();
 
-const { authenticate, authorize } = require("../middleware/auth.middleware");
 const {
   getPackages,
   createPackage,
+  updatePackage,
+  togglePackageStatus,
 } = require("../controllers/package.controller");
 
-// ai cũng xem được
-router.get("/", authenticate, getPackages);
-
-// chỉ admin
-router.post("/", authenticate, authorize(["admin"]), createPackage);
+router.get("/", getPackages);
+router.post("/", createPackage);
+router.put("/:id", updatePackage);
+router.patch("/:id/status", togglePackageStatus);
 
 module.exports = router;
