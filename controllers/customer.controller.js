@@ -5,9 +5,18 @@ const getCustomers = async (req, res) => {
   try {
     const customers = await prisma.customer.findMany({
       orderBy: { createdAt: "desc" },
+      include: {
+        subscriptions: {
+          include: {
+            package: true,
+          },
+        },
+      },
     });
 
-    res.json(customers);
+    res.json({
+      data: customers,
+    });
   } catch (error) {
     res.status(500).json({
       message: "Lỗi server",
@@ -65,7 +74,13 @@ const createCustomer = async (req, res) => {
       data: newCustomer,
     });
   } catch (error) {
-    res.status(500).json({
+    if (error.code === "P2002" && error.meta?.target?.includes("phone")) {
+      return res.status(400).json({
+        message: "Số điện thoại đã tồn tại",
+      });
+    }
+
+    return res.status(500).json({
       message: "Lỗi server",
       error: error.message,
     });
@@ -119,10 +134,44 @@ const deleteCustomer = async (req, res) => {
   }
 };
 
+const getCustomerDetail = async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+
+    const customer = await prisma.customer.findUnique({
+      where: { id },
+      include: {
+        subscriptions: {
+          include: {
+            package: true,
+          },
+          orderBy: {
+            startDate: "desc",
+          },
+        },
+      },
+    });
+
+    if (!customer) {
+      return res.status(404).json({
+        message: "Không tìm thấy khách hàng",
+      });
+    }
+
+    return res.json(customer);
+  } catch (error) {
+    return res.status(500).json({
+      message: "Lỗi server",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   getCustomers,
   getCustomerById,
   createCustomer,
   updateCustomer,
   deleteCustomer,
+  getCustomerDetail,
 };

@@ -22,7 +22,7 @@ function renderLayout(content) {
 
           <!-- MENU -->
           <div class="flex flex-col gap-2">
-            ${menus.map(m => menuItem(m.link, m.label, path, true)).join("")}
+            ${menus.map((m) => menuItem(m.link, m.label, path, true)).join("")}
           </div>
 
           <!-- LOGOUT -->
@@ -49,7 +49,7 @@ function initMenuEvent() {
   document.addEventListener("click", (e) => {
     const popup = document.getElementById("popup");
 
-  // ❗ nếu đang click trong popup → bỏ qua
+    // ❗ nếu đang click trong popup → bỏ qua
     if (popup && popup.contains(e.target)) return;
     const menu = document.getElementById("mobileMenu");
     const btn = document.getElementById("menuBtn");
@@ -79,6 +79,4 @@ function initMenuEvent() {
       menu.classList.add("hidden");
     }
   });
-
 }
-

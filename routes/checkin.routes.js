@@ -5,5 +5,10 @@ const { authenticate } = require("../middleware/auth.middleware");
 const controller = require("../controllers/checkin.controller");
 
 router.post("/", authenticate, controller.checkin);
+router.get(
+  "/customer/:customerId",
+  authenticate,
+  controller.getCheckinsByCustomer
+);
 
 module.exports = router;

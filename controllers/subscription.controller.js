@@ -1,6 +1,12 @@
 const prisma = require("../models/prisma");
 
-// 🔥 GET ALL
+function addMonths(date, months) {
+  const d = new Date(date);
+  d.setMonth(d.getMonth() + Number(months));
+  return d;
+}
+
+// GET ALL
 const getSubscriptions = async (req, res) => {
   try {
     const data = await prisma.subscription.findMany({
@@ -17,7 +23,7 @@ const getSubscriptions = async (req, res) => {
   }
 };
 
-// 🔥 CREATE
+// CREATE OR RENEW
 const createSubscription = async (req, res) => {
   try {
     const { customerId, packageId } = req.body;
@@ -28,34 +34,84 @@ const createSubscription = async (req, res) => {
       });
     }
 
-    // lấy package để tính thời hạn
+    const idCustomer = Number(customerId);
+    const idPackage = Number(packageId);
+
     const pkg = await prisma.package.findUnique({
-      where: { id: Number(packageId) },
+      where: { id: idPackage },
     });
 
-    if (!pkg) {
+    if (!pkg || pkg.isActive === false) {
       return res.status(404).json({
-        message: "Không tìm thấy gói",
+        message: "Không tìm thấy gói hoặc gói đã ngừng sử dụng",
       });
     }
 
-    const startDate = new Date();
-    const endDate = new Date();
-    endDate.setMonth(endDate.getMonth() + pkg.durationMonths);
+    const now = new Date();
+
+    const unpaidActiveSub = await prisma.subscription.findFirst({
+      where: {
+        customerId: idCustomer,
+        status: "active",
+        isPaid: false,
+        endDate: {
+          gte: now,
+        },
+      },
+      include: {
+        package: true,
+      },
+      orderBy: {
+        endDate: "desc",
+      },
+    });
+
+    if (unpaidActiveSub) {
+      return res.status(400).json({
+        message: `Khách còn gói ${
+          unpaidActiveSub.package?.packageName || ""
+        } chưa thanh toán. Vui lòng thanh toán trước khi gia hạn.`,
+      });
+    }
+
+    const activeSub = await prisma.subscription.findFirst({
+      where: {
+        customerId: idCustomer,
+        status: "active",
+        endDate: {
+          gte: now,
+        },
+      },
+      include: {
+        package: true,
+      },
+      orderBy: {
+        endDate: "desc",
+      },
+    });
+
+    // Nếu đang có gói còn hạn: tạo subscription mới nối tiếp từ ngày hết hạn xa nhất
+    const startDate = activeSub ? activeSub.endDate : now;
+    const endDate = addMonths(startDate, pkg.durationMonths);
 
     const subscription = await prisma.subscription.create({
       data: {
-        customerId: Number(customerId),
-        packageId: Number(packageId),
+        customerId: idCustomer,
+        packageId: idPackage,
         startDate,
         endDate,
         status: "active",
         isPaid: false,
       },
+      include: {
+        package: true,
+      },
     });
 
     res.json({
-      message: "Tạo subscription thành công",
+      message: activeSub
+        ? "Gia hạn gói tập thành công"
+        : "Tạo subscription thành công",
       data: subscription,
     });
   } catch (error) {
@@ -63,7 +119,7 @@ const createSubscription = async (req, res) => {
   }
 };
 
-// 🔥 PAY (cực quan trọng)
+// PAY
 const paySubscription = async (req, res) => {
   try {
     const { id } = req.params;

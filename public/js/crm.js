@@ -1,4 +1,3 @@
-
 let currentPage = 1;
 const pageSize = 10;
 let currentType = "guest";
@@ -16,7 +15,7 @@ const guestHeader = [
   { label: "Lần gần nhất", key: "lastDate", width: "min-w-[160px] text-center" },
   { label: "Nhãn", key: "tag", width: "min-w-[120px] text-center" },
   { label: "Ghi chú", key: null, width: "w-[80px] text-center" },
-  { label: "Chi tiết", key: null, width: "w-[80px] text-center" }
+  { label: "Chi tiết", key: null, width: "w-[80px] text-center" },
 ];
 
 const memberHeader = [
@@ -24,9 +23,13 @@ const memberHeader = [
   { label: "SDT", key: "phone", width: "w-[180px]  text-center" },
   { label: "Loại gói", key: "package", width: "min-w-[150px]  text-center" },
   { label: "Nhãn", key: "tag", width: "min-w-[140px]  text-center" },
-  { label: "Mức ưu tiên", key: "priority", width: "min-w-[110px]  text-center" },
+  {
+    label: "Mức ưu tiên",
+    key: "priority",
+    width: "min-w-[110px]  text-center",
+  },
   { label: "Ghi chú", key: null, width: "w-[80px] text-center" },
-  { label: "Chi tiết", key: null, width: "w-[80px] text-center" }
+  { label: "Chi tiết", key: null, width: "w-[80px] text-center" },
 ];
 
 let guestData = [];
@@ -40,8 +43,7 @@ document.addEventListener("DOMContentLoaded", () => {
     return;
   }
 
-  document.getElementById("app").innerHTML =
-    renderLayout(renderCRM());
+  document.getElementById("app").innerHTML = renderLayout(renderCRM());
   document.getElementById("modal-root").innerHTML = renderPopup();
 
   initMenuEvent();
@@ -55,8 +57,8 @@ async function fetchCRM() {
   try {
     const res = await fetch("http://localhost:3000/api/crm", {
       headers: {
-        Authorization: "Bearer " + token
-      }
+        Authorization: "Bearer " + token,
+      },
     });
 
     const data = await res.json();
@@ -65,12 +67,10 @@ async function fetchCRM() {
     memberData = data.member;
 
     renderTable();
-
   } catch (err) {
     console.error("Lỗi CRM:", err);
   }
 }
-
 
 function paginate(data) {
   const start = (currentPage - 1) * pageSize;
@@ -237,6 +237,7 @@ function renderTableWithPaging(columns, data) {
 
       <!-- ROW -->
       <div>
+
         ${pagedData.map((item, index) => {
 
           return `
@@ -245,16 +246,19 @@ function renderTableWithPaging(columns, data) {
               class="flex items-center gap-4 border-b border-[#B8D3F8] h-12 px-4 text-[14px] cursor-pointer
               ${selectedRowId == item.id ? "bg-[#E6F0FF]" : "hover:bg-gray-100"}">
 
-              ${columns.map(col => `
-                <div class="${col.width} ${col.key === null ? "flex justify-center items-center" : ""}">
+              ${columns
+                .map(
+                  (col) => `
+                <div class="${col.width} ${
+                    col.key === null ? "flex justify-center items-center" : ""
+                  }">
                   
                   ${
                     col.label === "Ghi chú"
                       ? `<img src="img/note-icon.png" 
                               class="w-5 h-5 cursor-pointer"
                               onclick="openEdit('${item.id}')">`
-
-                    : col.label === "Chi tiết"
+                      : col.label === "Chi tiết"
                       ? `<img src="img/detail-icon.png" 
                               class="w-6 h-6 cursor-pointer"
                               onclick="openDetail('${item.id}')">`
@@ -266,7 +270,9 @@ function renderTableWithPaging(columns, data) {
                       )
                   }
                 </div>
-              `).join("")}
+              `
+                )
+                .join("")}
 
             </div>
           `;
@@ -378,13 +384,14 @@ function switchTab(type) {
   isSearching = false;
   // render lại table
   renderTable();
-  
 }
 
 function changePage(page) {
   const data = isSearching
-  ? currentData
-  : (currentType === "guest" ? guestData : memberData);
+    ? currentData
+    : currentType === "guest"
+    ? guestData
+    : memberData;
 
   const totalPages = Math.ceil(data.length / pageSize);
 
@@ -461,7 +468,9 @@ function renderTable() {
 
   let data = isSearching
     ? currentData
-    : (currentType === "guest" ? guestData : memberData);
+    : currentType === "guest"
+    ? guestData
+    : memberData;
 
   // filter tag
   if (currentTagFilter !== "all") {
@@ -480,18 +489,18 @@ function renderTable() {
 }
 
 function handleSearch() {
-  const keyword = document
-    .getElementById("searchInput")
-    .value.toLowerCase();
+  const keyword = document.getElementById("searchInput").value.toLowerCase();
 
   const data = currentType === "guest" ? guestData : memberData;
   if (!keyword) {
     isSearching = false;
     currentData = [];
   } else {
-     currentData = data.filter(item =>
-    (item.name || "").toLowerCase().includes(keyword) ||
-    (item.phone || "").includes(keyword));
+    currentData = data.filter(
+      (item) =>
+        (item.name || "").toLowerCase().includes(keyword) ||
+        (item.phone || "").includes(keyword)
+    );
     isSearching = true;
   }
   currentPage = 1;
@@ -513,10 +522,12 @@ function openEdit(id) {
 
   // lấy data theo tab
   const data = isSearching
-  ? currentData
-  : (currentType === "guest" ? guestData : memberData);
+    ? currentData
+    : currentType === "guest"
+    ? guestData
+    : memberData;
 
-  const item = data.find(x => x.id == id);
+  const item = data.find((x) => x.id == id);
 
   if (!item) {
     showToast("Không tìm thấy khách hàng", "error");
@@ -590,20 +601,21 @@ function openDetail(id) {
 
   // lấy data theo tab
   const data = isSearching
-  ? currentData
-  : (currentType === "guest" ? guestData : memberData);
+    ? currentData
+    : currentType === "guest"
+    ? guestData
+    : memberData;
 
-  const item = data.find(x => x.id == id);
+  const item = data.find((x) => x.id == id);
 
   if (!item) {
     showToast("Không tìm thấy khách hàng", "error");
     return;
   }
 
-
   // ================== GUEST ==================
   if (currentType === "guest") {
-  content.innerHTML = `
+    content.innerHTML = `
     <h2 class="text-[#1E40AF] font-semibold text-[14px] mb-4 tracking-wide">
       Hoạt động gần đây
     </h2>
@@ -627,11 +639,11 @@ function openDetail(id) {
     </div>
     
   `;
-}
+  }
 
-// ================== MEMBER ==================
-else {
-  content.innerHTML = `
+  // ================== MEMBER ==================
+  else {
+    content.innerHTML = `
     <!-- GÓI -->
     <h2 class="text-[#1E40AF] font-semibold text-[14px] mb-2 tracking-wide">
       Thông tin gói hiện tại
@@ -726,7 +738,7 @@ else {
 
     </div>
   `;
-}
+  }
 }
 
 function renderPopup() {
@@ -758,9 +770,7 @@ function renderPopup() {
 function showToast(message, type = "success") {
   const toast = document.createElement("div");
 
-  const bgColor = type === "success"
-    ? "bg-green-500"
-    : "bg-red-500";
+  const bgColor = type === "success" ? "bg-green-500" : "bg-red-500";
 
   toast.className = `
     fixed top-5 right-5 z-50

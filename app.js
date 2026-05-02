@@ -38,7 +38,7 @@ const dashboardRoutes = require("./routes/dashboard.route");
 app.use("/api/dashboard", dashboardRoutes);
 
 const packageRoutes = require("./routes/package.route");
-app.use("/api/packages", packageRoutes);
+app.use("/api/packages", authenticate, packageRoutes);
 
 const crmRoutes = require("./routes/crm.route");
 app.use("/api/crm", crmRoutes);
@@ -56,9 +56,6 @@ app.get("/admin-test", authenticate, authorize(["admin"]), (req, res) => {
   res.json({ message: "Admin vào được" });
 });
 
-app.listen(3000, () => {
-  console.log("http://localhost:3000");
-});
 app.get("/customer", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "customer.html"));
 });
@@ -75,5 +72,15 @@ app.use("/api/subscriptions", subscriptionRoutes);
 const checkinRoutes = require("./routes/checkin.routes");
 app.use("/api/checkin", checkinRoutes);
 
+
 const noteRouter = require("./routes/note");
 app.use("/api/notes", noteRouter);
+
+app.get("/customer-detail", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "customer-detail.html"));
+});
+
+app.listen(3000, () => {
+  console.log("http://localhost:3000");
+});
+
