@@ -74,3 +74,6 @@ app.use("/api/subscriptions", subscriptionRoutes);
 // API checkin
 const checkinRoutes = require("./routes/checkin.routes");
 app.use("/api/checkin", checkinRoutes);
+
+const noteRouter = require("./routes/note");
+app.use("/api/notes", noteRouter);
