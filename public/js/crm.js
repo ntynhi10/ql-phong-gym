@@ -145,10 +145,10 @@ function renderTableWithPaging(columns, data) {
   const pagedData = paginate(data);
 
   return `
-    <div class="bg-white shadow p-4">
+    <div>
 
       <!-- HEADER -->
-      <div class="bg-[#E4EEFC] px-4 py-3 flex gap-4 text-[14px] font-semibold rounded-xl">
+      <div class="bg-[#D4E6FF] px-4 py-3 flex gap-4 text-[14px] font-semibold rounded-t-xl">
         ${columns.map(col => {
 
           // ===== TAG =====
@@ -235,22 +235,33 @@ function renderTableWithPaging(columns, data) {
         }).join("")}
       </div>
 
-      <!-- ROW -->
-      <div>
+      <!-- ROW + PAGINATION -->
+      <div class="bg-white rounded-b-xl overflow-hidden">
 
         ${pagedData.map((item, index) => {
 
           return `
             <div 
               onclick="selectRow('${item.id}')"
-              class="flex items-center gap-4 border-b border-[#B8D3F8] h-12 px-4 text-[14px] cursor-pointer
-              ${selectedRowId == item.id ? "bg-[#E6F0FF]" : "hover:bg-gray-100"}">
+              class="
+                flex items-center gap-4
+                border-b border-[#D0DDEE]
+                h-12 px-4 text-[14px]
+                cursor-pointer transition
+                ${
+                  selectedRowId == item.id
+                    ? "bg-[#EEF2FF]"
+                    : "bg-white hover:bg-gray-100"
+                }
+              ">
 
               ${columns
                 .map(
                   (col) => `
                 <div class="${col.width} ${
-                    col.key === null ? "flex justify-center items-center" : ""
+                    col.key === null
+                      ? "flex justify-center items-center"
+                      : ""
                   }">
                   
                   ${
@@ -258,17 +269,23 @@ function renderTableWithPaging(columns, data) {
                       ? `<img src="img/note-icon.png" 
                               class="w-5 h-5 cursor-pointer"
                               onclick="openEdit('${item.id}')">`
+
                       : col.label === "Chi tiết"
                       ? `<img src="img/detail-icon.png" 
                               class="w-6 h-6 cursor-pointer"
                               onclick="openDetail('${item.id}')">`
-                      : (col.key === "tag"
-                        ? renderTag(item.tag)
-                        : col.key === "priority"
-                          ? renderPriority(item.priority)
-                          : (item[col.key] ?? "")
-                      )
+
+                      : (
+                          col.key === "tag"
+                            ? renderTag(item.tag)
+
+                            : col.key === "priority"
+                              ? renderPriority(item.priority)
+
+                              : (item[col.key] ?? "")
+                        )
                   }
+
                 </div>
               `
                 )
@@ -277,11 +294,13 @@ function renderTableWithPaging(columns, data) {
             </div>
           `;
         }).join("")}
-      </div>
-      <!-- PAGINATION -->
-      ${renderPagination(data.length)}
 
-    </div>
+        <!-- PAGINATION -->
+        <div class="py-2">
+          ${renderPagination(data.length)}
+        </div>
+
+      </div>
   `;
 }
 
@@ -365,21 +384,69 @@ function switchTab(type) {
   currentPage = 1;
   currentData = [];
   // đổi màu tab
+  // đổi màu tab
   const tabGuest = document.getElementById("tab-guest");
   const tabMember = document.getElementById("tab-member");
 
   if (type === "guest") {
-    tabGuest.classList.add("bg-white", "text-black");
-    tabGuest.classList.remove("bg-gray-200", "text-gray-600");
 
-    tabMember.classList.remove("bg-white", "text-black");
-    tabMember.classList.add("bg-gray-200", "text-gray-600");
+    // ===== ACTIVE =====
+    tabGuest.classList.remove(
+      "bg-white",
+      "text-[#5193FF]",
+      "border-[#B7CCE9]"
+    );
+
+    tabGuest.classList.add(
+      "bg-[#1F5DC2]",
+      "text-white",
+      "border-[#89ADE6]",
+      "shadow-[0_4px_12px_rgba(0,0,0,0.15)]"
+    );
+
+    // ===== INACTIVE =====
+    tabMember.classList.remove(
+      "bg-[#1F5DC2]",
+      "text-white",
+      "border-[#89ADE6]",
+      "shadow-[0_4px_12px_rgba(0,0,0,0.15)]"
+    );
+
+    tabMember.classList.add(
+      "bg-white",
+      "text-[#5193FF]",
+      "border-[#B7CCE9]"
+    );
+
   } else {
-    tabMember.classList.add("bg-white", "text-black");
-    tabMember.classList.remove("bg-gray-200", "text-gray-600");
 
-    tabGuest.classList.remove("bg-white", "text-black");
-    tabGuest.classList.add("bg-gray-200", "text-gray-600");
+    // ===== ACTIVE =====
+    tabMember.classList.remove(
+      "bg-white",
+      "text-[#5193FF]",
+      "border-[#B7CCE9]"
+    );
+
+    tabMember.classList.add(
+      "bg-[#1F5DC2]",
+      "text-white",
+      "border-[#89ADE6]",
+      "shadow-[0_4px_12px_rgba(0,0,0,0.15)]"
+    );
+
+    // ===== INACTIVE =====
+    tabGuest.classList.remove(
+      "bg-[#1F5DC2]",
+      "text-white",
+      "border-[#89ADE6]",
+      "shadow-[0_4px_12px_rgba(0,0,0,0.15)]"
+    );
+
+    tabGuest.classList.add(
+      "bg-white",
+      "text-[#5193FF]",
+      "border-[#B7CCE9]"
+    );
   }
   isSearching = false;
   // render lại table
@@ -404,59 +471,111 @@ function changePage(page) {
 function renderCRM() {
   return `
 
-    <div class="p-2 ">
+    <div class="p-6">
 
       <!-- TOP BAR -->
-      <div class="flex justify-between items-center">
+      <div class="flex items-center justify-between mb-5">
 
-        <!-- TAB -->
-        <div class="flex relative ml-4 -mb-[12px]">
+        <!-- LEFT -->
+        <div class="flex items-center gap-2">
 
-          <button id="tab-guest" onclick="switchTab('guest')"
-            class="px-4 py-1.5 rounded-t-xl bg-white text-black text-[16px] font-medium">
+          <button
+            id="tab-guest"
+            onclick="switchTab('guest')"
+            class="
+              px-5 py-2 rounded-2xl
+              bg-[#1F5DC2]
+              text-white
+              text-[15px] font-semibold
+              border border-[#89ADE6]
+              shadow-[0_4px_12px_rgba(0,0,0,0.15)]
+              transition
+            "
+          >
             Khách vãng lai
           </button>
 
-          <button id="tab-member" onclick="switchTab('member')"
-            class="px-4 py-2 rounded-t-xl -ml-[1px] bg-gray-200 text-gray-500 text-[16px] font-medium">
+          <button
+            id="tab-member"
+            onclick="switchTab('member')"
+            class="
+              px-5 py-2 rounded-2xl
+              bg-white
+              text-[#5193FF]
+              text-[15px] font-semibold
+              border border-[#B7CCE9]
+              transition
+            "
+          >
             Hội viên
           </button>
 
         </div>
 
-        <!-- SEARCH -->
-        <div class="mr-4">
-          <div class="flex w-[320px] h-[36px] border border-[#2B6DD9] rounded-full overflow-hidden">
+        <!-- RIGHT -->
+        <div style="position:relative;">
 
-            <input 
-              type="text"
-              id="searchInput"
-              placeholder="Tìm kiếm khách hàng"
-              class="flex-1 px-4 outline-none text-gray-600 text-sm placeholder:text-gray-400"
-              onkeydown="handleEnter(event)"
+          <svg
+            style="
+              position:absolute;
+              left:10px;
+              top:50%;
+              transform:translateY(-50%);
+              pointer-events:none;
+            "
+            width="16"
+            height="16"
+            fill="none"
+            stroke="#9ca3af"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"
             />
+          </svg>
 
-            <div 
-              class="w-[50px] bg-[#B8D3F8] flex items-center justify-end pr-3 cursor-pointer"
-              onclick="handleSearch()"
-            >
-              <img 
-                src="img/search-icon.png" 
-                alt="search"
-                class="w-8 h-8 object-contain"
-              >
-            </div>
-          </div>
+          <input
+            type="text"
+            id="searchInput"
+            placeholder="Tìm tên hoặc SĐT..."
+            onkeydown="handleEnter(event)"
+            oninput="handleSearch()"
+
+            style="
+              padding:0 16px 0 34px;
+              height:36px;
+              width:240px;
+              background:#f8fafc;
+              border:1px solid #e2e8f0;
+              border-radius:10px;
+              font-size:13px;
+              color:#374151;
+              outline:none;
+              box-sizing:border-box;
+            "
+
+            onfocus="
+              this.style.borderColor='#93c5fd';
+              this.style.boxShadow='0 0 0 3px rgba(147,197,253,0.3)'
+            "
+
+            onblur="
+              this.style.borderColor='#e2e8f0';
+              this.style.boxShadow='none'
+            "
+          />
+
         </div>
 
       </div>
 
       <!-- TABLE -->
-      <div class="bg-[#F4F7FC] px-4 py-2 rounded-xl">
         <div id="tableContainer">
           ${renderTableWithPaging(guestHeader, guestData)}
         </div>
-      </div>
 
     </div>
 
@@ -482,10 +601,14 @@ function renderTable() {
     data = data.filter(item => item.priority === currentPriorityFilter);
 }
 
-  tableContainer.innerHTML = renderTableWithPaging(
-    currentType === "guest" ? guestHeader : memberHeader,
-    data
-  );
+  tableContainer.innerHTML = `
+  <div class="shadow-[0_4px_20px_rgba(0,0,0,0.06)] rounded-2xl">
+    ${renderTableWithPaging(
+      currentType === "guest" ? guestHeader : memberHeader,
+      data
+    )}
+  </div>
+`;
 }
 
 function handleSearch() {
