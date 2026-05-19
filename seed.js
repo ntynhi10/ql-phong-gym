@@ -1,4 +1,3 @@
-
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
@@ -104,27 +103,16 @@ const FEEDBACK_BY_RATING = {
   5: [
     "Dịch vụ rất tốt, nhân viên nhiệt tình",
     "Rất hài lòng",
-    "Nhân viên hướng dẫn tập rất tốt"
+    "Nhân viên hướng dẫn tập rất tốt",
   ],
   4: [
     "Khá ổn, sẽ quay lại",
     "Dịch vụ tốt",
-    "Rất hài lòng, sẽ tiếp tục gia hạn"
+    "Rất hài lòng, sẽ tiếp tục gia hạn",
   ],
-  3: [
-    "Bình thường",
-    "Tạm được",
-    "Cần cải thiện giờ cao điểm, quá đông"
-  ],
-  2: [
-    "Chưa hài lòng",
-    "Dịch vụ chưa tốt",
-    "Bãi giữ xe hơi nhỏ"
-  ],
-  1: [
-    "Rất tệ",
-    "Không hài lòng",
-  ],
+  3: ["Bình thường", "Tạm được", "Cần cải thiện giờ cao điểm, quá đông"],
+  2: ["Chưa hài lòng", "Dịch vụ chưa tốt", "Bãi giữ xe hơi nhỏ"],
+  1: ["Rất tệ", "Không hài lòng"],
 };
 
 function getName(i) {
@@ -136,21 +124,20 @@ function getGender(i) {
 
 // Behavior xoay vòng cố định theo index
 const BEHAVIORS = [
-  "DEAD",
-  "RISK",
-  "ACTIVE",
   "ACTIVE",
   "LOYAL",
   "LOYAL",
+  "ACTIVE",
   "LOYAL",
   "COMEBACK",
   "ACTIVE",
+  "LOYAL",
   "RISK",
+  "ACTIVE",
 ];
 function getBehavior(i) {
   return BEHAVIORS[i % BEHAVIORS.length];
-} 
-
+}
 
 function fixedDate(base, offsetDays) {
   const d = new Date(base);
@@ -532,6 +519,9 @@ async function main() {
       endDate.setMonth(endDate.getMonth() + pkg.durationMonths);
       const status = endDate >= now ? "active" : "expired";
 
+      let crmStartDate = startDate;
+      let crmEndDate = endDate;
+
       await prisma.subscription.create({
         data: {
           customer: { connect: { id: customer.id } },
@@ -543,6 +533,45 @@ async function main() {
           paidAt: startDate,
         },
       });
+
+      // Một phần khách cũ tốt được gia hạn để giảm hội viên hết hạn
+      const shouldRenewExpired =
+        endDate < now &&
+        ["ACTIVE", "LOYAL", "COMEBACK"].includes(behavior) &&
+        globalIdx % 4 !== 0;
+
+      if (shouldRenewExpired) {
+        const renewedPkg =
+          behavior === "LOYAL"
+            ? packages[3 + (globalIdx % 3)] // 12/18/24 tháng
+            : packages[1 + (globalIdx % 2)]; // 3/6 tháng
+
+        const renewedStart = new Date(now);
+        renewedStart.setDate(
+          renewedStart.getDate() -
+            (behavior === "LOYAL"
+              ? 35 + (globalIdx % 60)
+              : 5 + (globalIdx % 25))
+        );
+
+        const renewedEnd = new Date(renewedStart);
+        renewedEnd.setMonth(renewedEnd.getMonth() + renewedPkg.durationMonths);
+
+        await prisma.subscription.create({
+          data: {
+            customer: { connect: { id: customer.id } },
+            package: { connect: { id: renewedPkg.id } },
+            startDate: renewedStart,
+            endDate: renewedEnd,
+            status: "active",
+            isPaid: true,
+            paidAt: renewedStart,
+          },
+        });
+
+        crmStartDate = renewedStart;
+        crmEndDate = renewedEnd;
+      }
 
       // Gia hạn: cứ mỗi 5 khách thì 1 khách có sub cũ (renew)
       if (globalIdx % 5 === 0 && pkg.durationMonths <= 6) {
@@ -567,8 +596,8 @@ async function main() {
       // ── CHECKIN theo behavior ──
       const checkinDates = buildCheckinDates(
         behavior,
-        startDate,
-        endDate,
+        crmStartDate,
+        crmEndDate,
         now,
         globalIdx
       );
@@ -579,44 +608,44 @@ async function main() {
       }
 
       // ── FEEDBACK (gắn theo behavior) ──
-    const feedbackThreshold = Math.floor(hasFeedback * 10);
+      const feedbackThreshold = Math.floor(hasFeedback * 10);
 
-    if (globalIdx % 10 < feedbackThreshold) {
-      let rating;
+      if (globalIdx % 10 < feedbackThreshold) {
+        let rating;
 
-      switch (behavior) {
-        case "LOYAL":
-          rating = 4 + (globalIdx % 2);
-          break;
-        case "ACTIVE":
-          rating = 3 + (globalIdx % 2);
-          break;
-        case "COMEBACK":
-          rating = 3 + (globalIdx % 3);
-          break;
-        case "RISK":
-          rating = 2 + (globalIdx % 2);
-          break;
-        case "DEAD":
-          rating = 1 + (globalIdx % 2);
-          break;
+        switch (behavior) {
+          case "LOYAL":
+            rating = 4 + (globalIdx % 2);
+            break;
+          case "ACTIVE":
+            rating = 3 + (globalIdx % 2);
+            break;
+          case "COMEBACK":
+            rating = 3 + (globalIdx % 3);
+            break;
+          case "RISK":
+            rating = 2 + (globalIdx % 2);
+            break;
+          case "DEAD":
+            rating = 1 + (globalIdx % 2);
+            break;
+        }
+
+        let fbDate = fixedDate(startDate, 10 + (globalIdx % 20));
+        if (fbDate > now) fbDate = now;
+
+        const contentList = FEEDBACK_BY_RATING[rating];
+        const content = contentList[globalIdx % contentList.length];
+
+        await prisma.feedback.create({
+          data: {
+            customerId: customer.id,
+            rating,
+            content,
+            createdAt: fbDate,
+          },
+        });
       }
-
-      let fbDate = fixedDate(startDate, 10 + (globalIdx % 20));
-      if (fbDate > now) fbDate = now;
-
-      const contentList = FEEDBACK_BY_RATING[rating];
-      const content = contentList[globalIdx % contentList.length];
-
-      await prisma.feedback.create({
-        data: {
-          customerId: customer.id,
-          rating,
-          content,
-          createdAt: fbDate,
-        },
-      });
-    }
       // ── NOTE (cố định theo modulo) ──
       const noteThreshold = Math.floor(hasNote * 10);
       if (globalIdx % 10 < noteThreshold) {
@@ -647,34 +676,52 @@ async function main() {
   });
 
   // ── SUMMARY ──
+  // ── SUMMARY ──
   const totalC = await prisma.customer.count();
-  const activeSub = await prisma.subscription.count({
-    where: { status: "active" },
+
+  const members = await prisma.customer.findMany({
+    where: {
+      subscriptions: {
+        some: { packageId: { not: null } },
+      },
+    },
+    select: {
+      subscriptions: {
+        where: { packageId: { not: null } },
+        orderBy: [{ endDate: "desc" }, { startDate: "desc" }],
+        take: 1,
+        select: {
+          endDate: true,
+        },
+      },
+    },
   });
-  const expiredSub = await prisma.subscription.count({
-    where: { status: "expired" },
-  });
+
+  const nowSummary = new Date();
+
+  const activeMembers = members.filter(
+    (c) =>
+      c.subscriptions[0] && new Date(c.subscriptions[0].endDate) >= nowSummary
+  ).length;
+
+  const expiredMembers = members.filter(
+    (c) =>
+      c.subscriptions[0] && new Date(c.subscriptions[0].endDate) < nowSummary
+  ).length;
+
   const totalCk = await prisma.checkin.count();
   const totalFb = await prisma.feedback.count();
   const totalNote = await prisma.customerNote.count();
-  const memberCount = await prisma.customer.count({
-    where: {
-      subscriptions: {
-        some: { packageId: { not: null } }
-      }
-    }
-  });
-
-  const guests = totalC - memberCount;
+  const guests = totalC - members.length;
 
   console.log("\n✅ Seed hoàn tất!");
-  console.log(`   👥 Tổng khách    : ${totalC}`);
-  console.log(`   🟢 Active        : ${activeSub}`);
-  console.log(`   🔴 Hết hạn       : ${expiredSub}`);
-  console.log(`   ⚪ Vãng lai      : ${guests}`);
-  console.log(`   ✔  Check-in      : ${totalCk}`);
-  console.log(`   ⭐ Feedback      : ${totalFb}`);
-  console.log(`   📝 Note          : ${totalNote}`);
+  console.log(`   👥 Tổng khách       : ${totalC}`);
+  console.log(`   🟢 Hội viên còn hạn : ${activeMembers}`);
+  console.log(`   🔴 Hội viên hết hạn : ${expiredMembers}`);
+  console.log(`   ⚪ Vãng lai         : ${guests}`);
+  console.log(`   ✔  Check-in         : ${totalCk}`);
+  console.log(`   ⭐ Feedback         : ${totalFb}`);
+  console.log(`   📝 Note             : ${totalNote}`);
   console.log(`   👤 admin / 123`);
   console.log(`   👤 staff / 123`);
 }

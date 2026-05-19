@@ -62,7 +62,7 @@ app.get("/customer", (req, res) => {
 
 // API customer
 const customerRoutes = require("./routes/customer.routes");
-app.use("/api/customers", customerRoutes);
+app.use("/api/customers", authenticate, customerRoutes);
 
 // API subscription
 const subscriptionRoutes = require("./routes/subscription.routes");
@@ -71,7 +71,6 @@ app.use("/api/subscriptions", subscriptionRoutes);
 // API checkin
 const checkinRoutes = require("./routes/checkin.routes");
 app.use("/api/checkin", checkinRoutes);
-
 
 const noteRouter = require("./routes/note");
 app.use("/api/notes", noteRouter);
@@ -83,4 +82,3 @@ app.get("/customer-detail", (req, res) => {
 app.listen(3000, () => {
   console.log("http://localhost:3000");
 });
-

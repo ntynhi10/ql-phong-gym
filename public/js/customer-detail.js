@@ -7,6 +7,13 @@
 // ================================================================
 
 let customerDetail = null; // cache data khách
+let currentUser = null;
+let confirmAction = "renew";
+let confirmModalDrag = {
+  active: false,
+  offsetX: 0,
+  offsetY: 0,
+};
 let packages = []; // cache danh sách gói
 let customerId = null;
 let isEditing = false;
@@ -24,6 +31,8 @@ document.addEventListener("DOMContentLoaded", () => {
     window.location.href = "/login";
     return;
   }
+
+  currentUser = getCurrentUserFromToken();
 
   const params = new URLSearchParams(window.location.search);
   customerId = params.get("id");
@@ -356,6 +365,22 @@ function setHistoryTab(tab) {
   renderDetail();
 }
 
+function getCurrentUserFromToken() {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) return null;
+
+    const payload = token.split(".")[1];
+    return JSON.parse(atob(payload));
+  } catch (err) {
+    return null;
+  }
+}
+
+function isAdmin() {
+  return currentUser?.role === "admin";
+}
+
 // ================= SHELL =================
 function renderDetailShell() {
   return `
@@ -516,6 +541,8 @@ ${
         </div>
       </div>
 
+      ${renderDeleteButton()}
+
     </div>
 
     ${renderHistorySection(subs, pagedSubs)}
@@ -524,6 +551,25 @@ ${
   // Đóng dropdown khi click ngoài
   document.removeEventListener("click", closeRenewMenuOnOutside);
   document.addEventListener("click", closeRenewMenuOnOutside);
+}
+
+function renderDeleteButton() {
+  if (!isAdmin()) return "";
+
+  return `
+    <button onclick="openDeleteCustomerModal()"
+      style="display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 16px;
+             background:#fee2e2;color:#991b1b;font-size:13px;font-weight:700;
+             border:1px solid #fecaca;border-radius:10px;cursor:pointer;"
+      onmouseover="this.style.background='#fecaca'"
+      onmouseout="this.style.background='#fee2e2'">
+      <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3m-8 0h10"/>
+      </svg>
+      Xoá
+    </button>
+  `;
 }
 
 function historyTabButton(tab, label, count) {
@@ -823,7 +869,7 @@ let selectedPkg = null;
 
 function selectRenewPackage(id, name, months, price) {
   document.getElementById("renewMenu").style.display = "none";
-
+  confirmAction = "renew";
   selectedPkg = { id, name, months, price };
 
   // Hiển thị confirm modal
@@ -847,6 +893,20 @@ function selectRenewPackage(id, name, months, price) {
       ${infoRow("Hết hạn vào", formatDate(newEnd))}
     </div>`;
 
+  document.getElementById("confirmModalTitle").innerText = "Xác nhận gia hạn";
+  document.getElementById("confirmModalDesc").innerText =
+    "Vui lòng kiểm tra thông tin trước khi xác nhận";
+  document.getElementById("confirmModalIcon").innerHTML = `
+  <svg width="22" height="22" fill="none" stroke="#2563eb" viewBox="0 0 24 24">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+  </svg>`;
+  document.getElementById("confirmModalIcon").style.background = "#eff6ff";
+  document.getElementById("confirmModalConfirmBtn").innerText =
+    "Xác nhận gia hạn";
+  document.getElementById("confirmModalConfirmBtn").style.background =
+    "#2563eb";
+
   openConfirmModal();
 }
 
@@ -857,27 +917,29 @@ function renderConfirmModal() {
       style="display:none;position:fixed;inset:0;z-index:200;">
       <div style="position:absolute;inset:0;background:rgba(0,0,0,0.45);"
            onclick="closeConfirmModal()"></div>
-      <div style="display:flex;align-items:center;justify-content:center;height:100%;padding:16px;">
-        <div id="confirmModalBox"
-          style="position:relative;background:#fff;border-radius:16px;width:100%;max-width:420px;
-                 padding:24px;box-shadow:0 20px 60px rgba(0,0,0,0.15);
-                 transform:translateY(16px);opacity:0;transition:all 0.2s;">
 
-          <!-- Close -->
-          <button onclick="closeConfirmModal()"
-            style="position:absolute;top:16px;right:16px;width:32px;height:32px;
-                   display:flex;align-items:center;justify-content:center;
-                   border-radius:50%;border:none;background:transparent;
-                   color:#9ca3af;cursor:pointer;"
-            onmouseover="this.style.background='#f3f4f6'"
-            onmouseout="this.style.background='transparent'">
-            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-            </svg>
-          </button>
+      <div id="confirmModalBox"
+        style="position:fixed;left:50%;top:50%;z-index:201;background:#fff;border-radius:16px;
+               width:100%;max-width:420px;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,0.15);
+               transform:translate(-50%, -50%) scale(0.98);opacity:0;transition:opacity 0.18s, transform 0.18s;">
 
-          <!-- Icon -->
-          <div style="width:44px;height:44px;background:#eff6ff;border-radius:12px;
+        <!-- Close -->
+        <button onclick="closeConfirmModal()"
+          style="position:absolute;top:16px;right:16px;width:32px;height:32px;
+                 display:flex;align-items:center;justify-content:center;
+                 border-radius:50%;border:none;background:transparent;
+                 color:#9ca3af;cursor:pointer;"
+          onmouseover="this.style.background='#f3f4f6'"
+          onmouseout="this.style.background='transparent'">
+          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+
+        <!-- Drag handle -->
+        <div onmousedown="startConfirmModalDrag(event)"
+          style="cursor:move;user-select:none;padding-right:36px;margin:-4px -4px 16px -4px;padding:4px 36px 0 4px;">
+          <div id="confirmModalIcon" style="width:44px;height:44px;background:#eff6ff;border-radius:12px;
                       display:flex;align-items:center;justify-content:center;margin-bottom:14px;">
             <svg width="22" height="22" fill="none" stroke="#2563eb" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -885,25 +947,25 @@ function renderConfirmModal() {
             </svg>
           </div>
 
-          <h3 style="font-size:16px;font-weight:700;color:#1e293b;margin:0 0 4px;">Xác nhận gia hạn</h3>
-          <p style="font-size:12px;color:#94a3b8;margin:0 0 16px;">Vui lòng kiểm tra thông tin trước khi xác nhận</p>
-
-          <div id="confirmModalBody"></div>
-
-          <div style="display:flex;gap:8px;margin-top:20px;">
-            <button onclick="closeConfirmModal()"
-              style="flex:1;height:38px;background:#f1f5f9;color:#475569;font-size:13px;font-weight:500;
-                     border:none;border-radius:10px;cursor:pointer;"
-              onmouseover="this.style.background='#e2e8f0'"
-              onmouseout="this.style.background='#f1f5f9'">Hủy</button>
-            <button onclick="submitRenew()"
-              style="flex:1;height:38px;background:#2563eb;color:#fff;font-size:13px;font-weight:600;
-                     border:none;border-radius:10px;cursor:pointer;box-shadow:0 2px 8px rgba(37,99,235,0.3);"
-              onmouseover="this.style.background='#1d4ed8'"
-              onmouseout="this.style.background='#2563eb'">Xác nhận gia hạn</button>
-          </div>
-
+          <h3 id="confirmModalTitle" style="font-size:16px;font-weight:700;color:#1e293b;margin:0 0 4px;">Xác nhận gia hạn</h3>
+          <p id="confirmModalDesc" style="font-size:12px;color:#94a3b8;margin:0;">Vui lòng kiểm tra thông tin trước khi xác nhận</p>
         </div>
+
+        <div id="confirmModalBody"></div>
+
+        <div style="display:flex;gap:8px;margin-top:20px;">
+          <button onclick="closeConfirmModal()"
+            style="flex:1;height:38px;background:#f1f5f9;color:#475569;font-size:13px;font-weight:500;
+                   border:none;border-radius:10px;cursor:pointer;"
+            onmouseover="this.style.background='#e2e8f0'"
+            onmouseout="this.style.background='#f1f5f9'">Hủy</button>
+          <button id="confirmModalConfirmBtn" onclick="submitConfirmModal()"
+            style="flex:1;height:38px;background:#2563eb;color:#fff;font-size:13px;font-weight:600;
+                   border:none;border-radius:10px;cursor:pointer;box-shadow:0 2px 8px rgba(37,99,235,0.3);"
+            onmouseover="this.style.filter='brightness(0.92)'"
+            onmouseout="this.style.filter='none'">Xác nhận gia hạn</button>
+        </div>
+
       </div>
     </div>`;
 }
@@ -911,9 +973,16 @@ function renderConfirmModal() {
 function openConfirmModal() {
   const modal = document.getElementById("confirmModal");
   const box = document.getElementById("confirmModalBox");
-  modal.style.display = "flex";
+
+  modal.style.display = "block";
+
+  box.style.left = "50%";
+  box.style.top = "50%";
+  box.style.transform = "translate(-50%, -50%) scale(0.98)";
+  box.style.opacity = "0";
+
   requestAnimationFrame(() => {
-    box.style.transform = "translateY(0)";
+    box.style.transform = "translate(-50%, -50%) scale(1)";
     box.style.opacity = "1";
   });
 }
@@ -921,11 +990,146 @@ function openConfirmModal() {
 function closeConfirmModal() {
   const modal = document.getElementById("confirmModal");
   const box = document.getElementById("confirmModalBox");
-  box.style.transform = "translateY(16px)";
+
+  box.style.transform = "translate(-50%, -50%) scale(0.98)";
   box.style.opacity = "0";
+
   setTimeout(() => {
     modal.style.display = "none";
   }, 180);
+}
+
+function startConfirmModalDrag(e) {
+  const box = document.getElementById("confirmModalBox");
+  const rect = box.getBoundingClientRect();
+
+  confirmModalDrag.active = true;
+  confirmModalDrag.offsetX = e.clientX - rect.left;
+  confirmModalDrag.offsetY = e.clientY - rect.top;
+
+  box.style.transition = "none";
+  box.style.transform = "none";
+  box.style.left = rect.left + "px";
+  box.style.top = rect.top + "px";
+
+  document.addEventListener("mousemove", dragConfirmModal);
+  document.addEventListener("mouseup", stopConfirmModalDrag);
+}
+
+function dragConfirmModal(e) {
+  if (!confirmModalDrag.active) return;
+
+  const box = document.getElementById("confirmModalBox");
+  const rect = box.getBoundingClientRect();
+
+  let left = e.clientX - confirmModalDrag.offsetX;
+  let top = e.clientY - confirmModalDrag.offsetY;
+
+  left = Math.max(8, Math.min(left, window.innerWidth - rect.width - 8));
+  top = Math.max(8, Math.min(top, window.innerHeight - rect.height - 8));
+
+  box.style.left = left + "px";
+  box.style.top = top + "px";
+}
+
+function stopConfirmModalDrag() {
+  confirmModalDrag.active = false;
+
+  const box = document.getElementById("confirmModalBox");
+  box.style.transition = "opacity 0.18s, transform 0.18s";
+
+  document.removeEventListener("mousemove", dragConfirmModal);
+  document.removeEventListener("mouseup", stopConfirmModalDrag);
+}
+
+function openDeleteCustomerModal() {
+  if (!isAdmin()) {
+    showToast("Bạn không có quyền xoá khách hàng", "error");
+    return;
+  }
+
+  confirmAction = "delete";
+
+  const c = customerDetail;
+  const modalBody = document.getElementById("confirmModalBody");
+
+  document.getElementById("confirmModalTitle").innerText =
+    "Xác nhận xoá khách hàng";
+  document.getElementById("confirmModalDesc").innerText =
+    "Thao tác này sẽ xoá khách hàng và dữ liệu liên quan";
+
+  document.getElementById("confirmModalIcon").innerHTML = `
+    <svg width="22" height="22" fill="none" stroke="#dc2626" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3m-8 0h10"/>
+    </svg>`;
+  document.getElementById("confirmModalIcon").style.background = "#fee2e2";
+
+  document.getElementById("confirmModalConfirmBtn").innerText = "Xác nhận xoá";
+  document.getElementById("confirmModalConfirmBtn").style.background =
+    "#dc2626";
+
+  modalBody.innerHTML = `
+    <p style="font-size:15px;color:#1e293b;font-weight:500;margin:0 0 12px;">
+      Bạn có chắc chắn muốn xoá khách hàng <strong>${
+        c.fullName || "—"
+      }</strong>?
+    </p>
+
+    <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:12px 16px;display:flex;flex-direction:column;gap:6px;">
+      ${infoRow("Họ và tên", c.fullName || "—")}
+      ${infoRow("Số điện thoại", c.phone || "—")}
+      ${infoRow("Giới tính", formatGender(c.gender))}
+      ${infoRow("Loại khách", getType(c))}
+    </div>
+
+    <p style="font-size:12px;color:#dc2626;margin:10px 0 0;">
+      Lưu ý: dữ liệu đăng ký, check-in, ghi chú và phản hồi liên quan cũng sẽ bị xoá.
+    </p>`;
+
+  openConfirmModal();
+}
+
+function submitConfirmModal() {
+  if (confirmAction === "delete") {
+    return submitDeleteCustomer();
+  }
+
+  return submitRenew();
+}
+
+async function submitDeleteCustomer() {
+  if (!isAdmin()) {
+    showToast("Bạn không có quyền xoá khách hàng", "error");
+    return;
+  }
+
+  try {
+    const token = localStorage.getItem("token");
+
+    const res = await fetch(`/api/customers/${customerId}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: "Bearer " + token,
+      },
+    });
+
+    const result = await res.json();
+
+    if (!res.ok) {
+      showToast(result.message || "Xoá khách hàng thất bại", "error");
+      return;
+    }
+
+    closeConfirmModal();
+    showToast("Xoá khách hàng thành công!");
+
+    setTimeout(() => {
+      window.location.href = "/customer";
+    }, 700);
+  } catch (err) {
+    showToast("Lỗi kết nối server", "error");
+  }
 }
 
 async function submitRenew() {

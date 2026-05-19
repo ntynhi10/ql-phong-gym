@@ -10,9 +10,17 @@ let selectedRowId = null;
 
 const guestHeader = [
   { label: "Tên", key: "name", width: "w-[220px] " },
-  { label: "SDT", key: "phone", width: "w-[180px]  text-center",},
-  { label: "Tần suất 30 ngày", key: "total", width: "min-w-[150px]  text-center" },
-  { label: "Lần gần nhất", key: "lastDate", width: "min-w-[160px] text-center" },
+  { label: "SDT", key: "phone", width: "w-[180px]  text-center" },
+  {
+    label: "Tần suất 30 ngày",
+    key: "total",
+    width: "min-w-[150px]  text-center",
+  },
+  {
+    label: "Lần gần nhất",
+    key: "lastDate",
+    width: "min-w-[160px] text-center",
+  },
   { label: "Nhãn", key: "tag", width: "min-w-[120px] text-center" },
   { label: "Ghi chú", key: null, width: "w-[80px] text-center" },
   { label: "Chi tiết", key: null, width: "w-[80px] text-center" },
@@ -55,7 +63,7 @@ async function fetchCRM() {
   const token = localStorage.getItem("token");
 
   try {
-    const res = await fetch("http://localhost:3000/api/crm", {
+    const res = await fetch("/api/crm", {
       headers: {
         Authorization: "Bearer " + token,
       },
@@ -79,64 +87,64 @@ function paginate(data) {
 
 function renderPagination(totalItems) {
   const totalPages = Math.ceil(totalItems / pageSize);
-
   if (totalPages <= 1) return "";
 
-  let pages = [];
+  let pages = [1];
+  const start = Math.max(2, currentPage - 1);
+  const end = Math.min(totalPages - 1, currentPage + 1);
 
-  // luôn có page 1
-  pages.push(1);
+  if (start > 2) pages.push("...");
+  for (let i = start; i <= end; i++) pages.push(i);
+  if (end < totalPages - 1) pages.push("...");
+  if (totalPages > 1) pages.push(totalPages);
 
-  // range giữa
-  let start = Math.max(2, currentPage - 2);
-  let end = Math.min(totalPages - 1, currentPage + 2);
-
-  // nếu cách xa thì thêm ...
-  if (start > 2) {
-    pages.push("...");
-  }
-
-  for (let i = start; i <= end; i++) {
-    pages.push(i);
-  }
-
-  // nếu cuối xa thì thêm ...
-  if (end < totalPages - 1) {
-    pages.push("...");
-  }
-
-  // luôn có page cuối
-  if (totalPages > 1) {
-    pages.push(totalPages);
-  }
+  const btnBase =
+    "width:32px;height:32px;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;";
 
   return `
-    <div class="flex justify-center items-center gap-2 mt-4">
+    <div style="display:flex;align-items:center;gap:6px;">
+      <button onclick="changePage(1)" ${currentPage === 1 ? "disabled" : ""}
+        style="${btnBase}background:#f8fafc;color:#cbd5e1;${
+    currentPage === 1 ? "cursor:default;" : "color:#64748b;"
+  }">«</button>
 
-      <button onclick="changePage(1)" class="px-2">«</button>
-      <button onclick="changePage(${currentPage - 1})" class="px-2">‹</button>
+      <button onclick="changePage(${currentPage - 1})" ${
+    currentPage === 1 ? "disabled" : ""
+  }
+        style="${btnBase}background:#f8fafc;color:#cbd5e1;${
+    currentPage === 1 ? "cursor:default;" : "color:#64748b;"
+  }">‹</button>
 
-      ${pages.map(p => {
-        if (p === "...") {
-          return `<span class="px-2">...</span>`;
-        }
+      ${pages
+        .map((p) => {
+          if (p === "...") {
+            return `<span style="height:32px;display:inline-flex;align-items:center;padding:0 4px;color:#94a3b8;font-size:13px;">...</span>`;
+          }
 
-        return `
-          <button 
-            onclick="changePage(${p})"
-            class="px-3 py-1 rounded ${
-              currentPage === p
-                ? "bg-[#1E4E8C] text-white"
-                : "bg-gray-200"
-            }">
-            ${p}
-          </button>
-        `;
-      }).join("")}
+          const active = currentPage === p;
+          return `
+            <button onclick="changePage(${p})"
+              style="${btnBase}
+                     background:${active ? "#2563eb" : "#f1f5f9"};
+                     color:${active ? "#fff" : "#475569"};">
+              ${p}
+            </button>`;
+        })
+        .join("")}
 
-      <button onclick="changePage(${currentPage + 1})" class="px-2">›</button>
-      <button onclick="changePage(${totalPages})" class="px-2">»</button>
+      <button onclick="changePage(${currentPage + 1})" ${
+    currentPage === totalPages ? "disabled" : ""
+  }
+        style="${btnBase}background:#f1f5f9;color:#64748b;${
+    currentPage === totalPages ? "opacity:0.4;cursor:default;" : ""
+  }">›</button>
 
+      <button onclick="changePage(${totalPages})" ${
+    currentPage === totalPages ? "disabled" : ""
+  }
+        style="${btnBase}background:#f1f5f9;color:#64748b;${
+    currentPage === totalPages ? "opacity:0.4;cursor:default;" : ""
+  }">»</button>
     </div>
   `;
 }
@@ -145,162 +153,117 @@ function renderTableWithPaging(columns, data) {
   const pagedData = paginate(data);
 
   return `
-    <div>
+    <div style="background:#fff;border-radius:16px;border:1px solid #e5e7eb;
+            box-shadow:0 1px 4px rgba(0,0,0,0.06);max-width:100%;
+            position:relative;overflow:visible;">
 
-      <!-- HEADER -->
-      <div class="bg-[#D4E6FF] px-4 py-3 flex gap-4 text-[14px] font-semibold rounded-t-xl">
-        ${columns.map(col => {
-
-          // ===== TAG =====
-          if (col.key === "tag") {
-            return `
-              <div class="${col.width} relative flex items-center justify-center gap-1">
-                ${col.label}
-                <span onclick="toggleTagDropdown(event)" class="cursor-pointer text-xs inline-flex items-center">
-                  <img src="img/filter.png">
-                </span>
-                <div id="tagDropdown"
-                  class="hidden absolute top-6 right-0 bg-white shadow rounded p-2 w-40 z-50">
-                  ${[
-                    "all",
-                    "Tiềm năng",
-                    "Hết hạn",
-                    "Cần chăm sóc",
-                    "Sắp hết hạn",
-                    "Ổn định",
-                    "Ít giá trị"
-                  ].map(tag => `
-                    <div 
-                      onclick="setTagFilter('${tag}')"
-                      style="
-                        padding:6px 10px;
-                        border-radius:6px;
-                        cursor:pointer;
-                        color:${currentTagFilter === tag ? '#2563eb' : '#000'};
-                        font-weight:${currentTagFilter === tag ? '600' : '400'};
-                      "
-                    >
-                      ${tag === "all" ? "Tất cả" : tag}
-                    </div>
-                  `).join("")}
-
+      <div style="display:flex;align-items:center;padding:12px 20px;background:#eef3ff;
+            border-bottom:1px solid #f3f4f6;border-radius:16px 16px 0 0;">
+        ${columns
+          .map((col) => {
+            if (col.key === "tag") {
+              return `
+                <div style="${crmColStyle(
+                  col
+                )} position:relative;display:flex;align-items:center;justify-content:center;gap:6px;">
+                  ${col.label}
+                  <div style="position:relative;display:inline-flex;align-items:center;">
+                  <button onclick="toggleTagDropdown(event)"
+                    style="border:none;background:transparent;cursor:pointer;color:#64748b;padding:0;">
+                    <i class="fa-solid fa-filter" style="font-size:11px;"></i>
+                  </button>
+                  ${renderTagDropdown()}
                 </div>
-              </div>
-            `;
-          }
+                </div>`;
+            }
 
-          // ===== PRIORITY =====
-          if (col.key === "priority") {
-            return `
-              <div class="${col.width} relative flex items-center justify-center gap-1">
-                ${col.label}
-                <span onclick="togglePriorityDropdown(event)" class="cursor-pointer text-xs">
-                  <img src="img/filter.png">
-                </span>
+            if (col.key === "priority") {
+              return `
+                <div style="${crmColStyle(
+                  col
+                )}font-size:12px;color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;">
+                  ${col.label}
+                  <div style="position:relative;display:inline-flex;align-items:center;">
+                    <button onclick="togglePriorityDropdown(event)"
+                      style="border:none;background:transparent;cursor:pointer;color:#64748b;padding:0;">
+                      <i class="fa-solid fa-filter" style="font-size:11px;"></i>
+                    </button>
+                    ${renderPriorityDropdown()}
+                  </div>
+                </div>`;
+            }
 
-                <div id="priorityDropdown"
-                  class="hidden absolute top-6 right-0 bg-white shadow rounded p-2 w-36 z-50">
-
-                  ${[
-                    {label: "Tất cả", value: "all"},
-                    {label: "Very High", value: "very_high"},
-                    {label: "High", value: "high"},
-                    {label: "Medium", value: "medium"},
-                    {label: "Low", value: "low"}
-                  ].map(opt => `
-                    <div 
-                      onclick="setPriorityFilter('${opt.value}')"
-                      style="
-                        padding:6px 10px;
-                        border-radius:6px;
-                        cursor:pointer;
-                        color:${currentPriorityFilter === opt.value ? '#2563eb' : '#000'};
-                        font-weight:${currentPriorityFilter === opt.value ? '600' : '400'};
-                      "
-                    >
-                      ${opt.label}
-                    </div>
-                  `).join("")}
-
-                </div>
-              </div>
-            `;
-          }
-
-          return `
-            <div class="${col.width}">
-              ${col.label}
-            </div>
-          `;
-        }).join("")}
+            return `<div style="${crmColStyle(
+              col
+            )}font-size:12px;color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;">${
+              col.label
+            }</div>`;
+          })
+          .join("")}
       </div>
 
-      <!-- ROW + PAGINATION -->
-      <div class="bg-white rounded-b-xl overflow-hidden">
+      ${
+        pagedData.length === 0
+          ? `<div style="padding:42px;text-align:center;color:#94a3b8;font-size:13px;">Không có dữ liệu</div>`
+          : pagedData
+              .map(
+                (item) => `
+          <div onclick="selectRow('${item.id}')"
+            style="display:flex;align-items:center;padding:12px 20px;border-bottom:1px solid #f9fafb;
+                   cursor:pointer;background:${
+                     selectedRowId == item.id ? "#eff6ff" : "#fff"
+                   };"
+            onmouseover="this.style.background='#f8fafc'"
+            onmouseout="this.style.background='${
+              selectedRowId == item.id ? "#eff6ff" : "#fff"
+            }'">
 
-        ${pagedData.map((item, index) => {
+            ${columns
+              .map((col) => {
+                let value = item[col.key] ?? "";
 
-          return `
-            <div 
-              onclick="selectRow('${item.id}')"
-              class="
-                flex items-center gap-4
-                border-b border-[#D0DDEE]
-                h-12 px-4 text-[14px]
-                cursor-pointer transition
-                ${
-                  selectedRowId == item.id
-                    ? "bg-[#EEF2FF]"
-                    : "bg-white hover:bg-gray-100"
+                if (col.label === "Ghi chú") {
+                  value = `
+                    <button onclick="event.stopPropagation();openEdit('${item.id}')"
+                      style="width:30px;height:30px;border:none;border-radius:8px;background:#eff6ff;color:#1d4ed8;cursor:pointer;">
+                      <i class="fa-regular fa-pen-to-square"></i>
+                    </button>`;
+                } else if (col.label === "Chi tiết") {
+                  value = `
+                    <button onclick="event.stopPropagation();openDetail('${item.id}')"
+                      style="width:30px;height:30px;border:none;border-radius:8px;background:#f1f5f9;color:#1e293b;cursor:pointer;">
+                      <i class="fa-solid fa-circle-info"></i>
+                    </button>`;
+                } else if (col.key === "tag") {
+                  value = renderTag(item.tag);
+                } else if (col.key === "priority") {
+                  value = renderPriority(item.priority);
                 }
-              ">
 
-              ${columns
-                .map(
-                  (col) => `
-                <div class="${col.width} ${
-                    col.key === null
-                      ? "flex justify-center items-center"
-                      : ""
-                  }">
-                  
-                  ${
-                    col.label === "Ghi chú"
-                      ? `<img src="img/note-icon.png" 
-                              class="w-5 h-5 cursor-pointer"
-                              onclick="openEdit('${item.id}')">`
+                return `
+                  <div style="${crmColStyle(col)} ${
+                  col.key === null ? "display:flex;justify-content:center;" : ""
+                }">
+                    ${value}
+                  </div>`;
+              })
+              .join("")}
+          </div>`
+              )
+              .join("")
+      }
 
-                      : col.label === "Chi tiết"
-                      ? `<img src="img/detail-icon.png" 
-                              class="w-6 h-6 cursor-pointer"
-                              onclick="openDetail('${item.id}')">`
-
-                      : (
-                          col.key === "tag"
-                            ? renderTag(item.tag)
-
-                            : col.key === "priority"
-                              ? renderPriority(item.priority)
-
-                              : (item[col.key] ?? "")
-                        )
-                  }
-
-                </div>
-              `
-                )
-                .join("")}
-
-            </div>
-          `;
-        }).join("")}
-
-        <!-- PAGINATION -->
-        <div class="py-2">
-          ${renderPagination(data.length)}
-        </div>
-
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 20px;">
+        <span style="font-size:12px;color:#94a3b8;">
+          ${
+            data.length === 0 ? 0 : (currentPage - 1) * pageSize + 1
+          }-${Math.min(currentPage * pageSize, data.length)} / ${
+    data.length
+  } khách hàng
+        </span>
+        ${renderPagination(data.length)}
       </div>
+    </div>
   `;
 }
 
@@ -310,28 +273,28 @@ function renderTag(tag) {
   const map = {
     "Tiềm năng": {
       bg: "bg-[#EEFFEF]",
-      text: "text-[#0D6220]"
+      text: "text-[#0D6220]",
     },
     "Hết hạn": {
       bg: "bg-[#FFE8E5]",
-      text: "text-[#EA1F18]"
+      text: "text-[#EA1F18]",
     },
     "Sắp hết hạn": {
       bg: "bg-[#FFEAD8]",
-      text: "text-[#E63900]"
+      text: "text-[#E63900]",
     },
     "Ổn định": {
       bg: "bg-[#EEFFEF]",
-      text: "text-[#0D6220]"
+      text: "text-[#0D6220]",
     },
     "Cần chăm sóc": {
       bg: "bg-[#FFFEDF]",
-      text: "text-[#F2911A]"
+      text: "text-[#F2911A]",
     },
     "Ít giá trị": {
       bg: "bg-[#F3F5F4]",
-      text: "text-[#727272]"
-    }
+      text: "text-[#727272]",
+    },
   };
 
   const style = map[tag] || {};
@@ -347,34 +310,36 @@ function renderPriority(priority) {
   const map = {
     very_high: {
       color: "bg-red-500",
-      active: 4
+      active: 4,
     },
     high: {
       color: "bg-orange-500",
-      active: 3
+      active: 3,
     },
     medium: {
       color: "bg-yellow-400",
-      active: 2
+      active: 2,
     },
     low: {
       color: "bg-green-500",
-      active: 1
-    }
+      active: 1,
+    },
   };
 
   const p = map[priority] || { active: 0 };
 
   return `
     <div class="flex items-end gap-1 justify-center h-5">
-      ${[1,2,3,4].map(i => `
+      ${[1, 2, 3, 4]
+        .map(
+          (i) => `
         <span 
-          class="w-1.5 rounded-sm ${
-            i <= p.active ? p.color : "bg-gray-200"
-          }"
+          class="w-1.5 rounded-sm ${i <= p.active ? p.color : "bg-gray-200"}"
           style="height:${i * 4}px"
         ></span>
-      `).join("")}
+      `
+        )
+        .join("")}
     </div>
   `;
 }
@@ -383,73 +348,22 @@ function switchTab(type) {
   currentType = type;
   currentPage = 1;
   currentData = [];
-  // đổi màu tab
-  // đổi màu tab
+  isSearching = false;
+
+  const input = document.getElementById("searchInput");
+  if (input) input.value = "";
+
   const tabGuest = document.getElementById("tab-guest");
   const tabMember = document.getElementById("tab-member");
 
-  if (type === "guest") {
+  const activeStyle =
+    "height:34px;padding:0 16px;border-radius:10px;border:1px solid #2563eb;background:#2563eb;color:#fff;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(37,99,235,0.25);";
+  const inactiveStyle =
+    "height:34px;padding:0 16px;border-radius:10px;border:1px solid #e2e8f0;background:#f8fafc;color:#475569;font-size:13px;font-weight:700;cursor:pointer;";
 
-    // ===== ACTIVE =====
-    tabGuest.classList.remove(
-      "bg-white",
-      "text-[#5193FF]",
-      "border-[#B7CCE9]"
-    );
+  tabGuest.style.cssText = type === "guest" ? activeStyle : inactiveStyle;
+  tabMember.style.cssText = type === "member" ? activeStyle : inactiveStyle;
 
-    tabGuest.classList.add(
-      "bg-[#1F5DC2]",
-      "text-white",
-      "border-[#89ADE6]",
-      "shadow-[0_4px_12px_rgba(0,0,0,0.15)]"
-    );
-
-    // ===== INACTIVE =====
-    tabMember.classList.remove(
-      "bg-[#1F5DC2]",
-      "text-white",
-      "border-[#89ADE6]",
-      "shadow-[0_4px_12px_rgba(0,0,0,0.15)]"
-    );
-
-    tabMember.classList.add(
-      "bg-white",
-      "text-[#5193FF]",
-      "border-[#B7CCE9]"
-    );
-
-  } else {
-
-    // ===== ACTIVE =====
-    tabMember.classList.remove(
-      "bg-white",
-      "text-[#5193FF]",
-      "border-[#B7CCE9]"
-    );
-
-    tabMember.classList.add(
-      "bg-[#1F5DC2]",
-      "text-white",
-      "border-[#89ADE6]",
-      "shadow-[0_4px_12px_rgba(0,0,0,0.15)]"
-    );
-
-    // ===== INACTIVE =====
-    tabGuest.classList.remove(
-      "bg-[#1F5DC2]",
-      "text-white",
-      "border-[#89ADE6]",
-      "shadow-[0_4px_12px_rgba(0,0,0,0.15)]"
-    );
-
-    tabGuest.classList.add(
-      "bg-white",
-      "text-[#5193FF]",
-      "border-[#B7CCE9]"
-    );
-  }
-  isSearching = false;
-  // render lại table
   renderTable();
 }
 
@@ -470,115 +384,53 @@ function changePage(page) {
 
 function renderCRM() {
   return `
-
-    <div class="p-6">
-
-      <!-- TOP BAR -->
-      <div class="flex items-center justify-between mb-5">
-
-        <!-- LEFT -->
-        <div class="flex items-center gap-2">
-
-          <button
-            id="tab-guest"
-            onclick="switchTab('guest')"
-            class="
-              px-5 py-2 rounded-2xl
-              bg-[#1F5DC2]
-              text-white
-              text-[15px] font-semibold
-              border border-[#89ADE6]
-              shadow-[0_4px_12px_rgba(0,0,0,0.15)]
-              transition
-            "
-          >
-            Khách vãng lai
-          </button>
-
-          <button
-            id="tab-member"
-            onclick="switchTab('member')"
-            class="
-              px-5 py-2 rounded-2xl
-              bg-white
-              text-[#5193FF]
-              text-[15px] font-semibold
-              border border-[#B7CCE9]
-              transition
-            "
-          >
-            Hội viên
-          </button>
-
+    <div style="padding:24px 38px;width:100%;">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px;">
+        <div>
+          <h1 style="font-size:22px;font-weight:800;color:#0f172a;margin:0;">CRM</h1>
+          <p style="font-size:13px;color:#94a3b8;margin:4px 0 0;">
+            Theo dõi khách cần chăm sóc và mức độ ưu tiên
+          </p>
         </div>
 
-        <!-- RIGHT -->
         <div style="position:relative;">
-
-          <svg
-            style="
-              position:absolute;
-              left:10px;
-              top:50%;
-              transform:translateY(-50%);
-              pointer-events:none;
-            "
-            width="16"
-            height="16"
-            fill="none"
-            stroke="#9ca3af"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"
-            />
+          <svg style="position:absolute;left:12px;top:50%;transform:translateY(-50%);pointer-events:none;"
+            width="16" height="16" fill="none" stroke="#9ca3af" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/>
           </svg>
 
-          <input
-            type="text"
-            id="searchInput"
+          <input type="text" id="searchInput"
             placeholder="Tìm tên hoặc SĐT..."
             onkeydown="handleEnter(event)"
             oninput="handleSearch()"
-
-            style="
-              padding:0 16px 0 34px;
-              height:36px;
-              width:240px;
-              background:#f8fafc;
-              border:1px solid #e2e8f0;
-              border-radius:10px;
-              font-size:13px;
-              color:#374151;
-              outline:none;
-              box-sizing:border-box;
-            "
-
-            onfocus="
-              this.style.borderColor='#93c5fd';
-              this.style.boxShadow='0 0 0 3px rgba(147,197,253,0.3)'
-            "
-
-            onblur="
-              this.style.borderColor='#e2e8f0';
-              this.style.boxShadow='none'
-            "
-          />
-
+            style="padding:0 16px 0 38px;height:36px;width:240px;background:#f8fafc;
+                   border:1px solid #e2e8f0;border-radius:10px;font-size:13px;color:#374151;
+                   outline:none;box-sizing:border-box;"
+            onfocus="this.style.borderColor='#93c5fd';this.style.boxShadow='0 0 0 3px rgba(147,197,253,0.3)'"
+            onblur="this.style.borderColor='#e2e8f0';this.style.boxShadow='none'"/>
         </div>
-
       </div>
 
-      <!-- TABLE -->
-        <div id="tableContainer">
-          ${renderTableWithPaging(guestHeader, guestData)}
-        </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
+        <button id="tab-guest" onclick="switchTab('guest')"
+          style="height:34px;padding:0 16px;border-radius:10px;border:1px solid #2563eb;
+                 background:#2563eb;color:#fff;font-size:13px;font-weight:700;cursor:pointer;
+                 box-shadow:0 2px 8px rgba(37,99,235,0.25);">
+          Khách vãng lai
+        </button>
 
+        <button id="tab-member" onclick="switchTab('member')"
+          style="height:34px;padding:0 16px;border-radius:10px;border:1px solid #e2e8f0;
+                 background:#f8fafc;color:#475569;font-size:13px;font-weight:700;cursor:pointer;">
+          Hội viên
+        </button>
+      </div>
+
+      <div id="tableContainer">
+        ${renderTableWithPaging(guestHeader, guestData)}
+      </div>
     </div>
-
   `;
 }
 
@@ -591,24 +443,18 @@ function renderTable() {
     ? guestData
     : memberData;
 
-  // filter tag
   if (currentTagFilter !== "all") {
-    data = data.filter(item => item.tag === currentTagFilter);
+    data = data.filter((item) => item.tag === currentTagFilter);
   }
 
-  // filter priority (chỉ member)
   if (currentPriorityFilter !== "all" && currentType === "member") {
-    data = data.filter(item => item.priority === currentPriorityFilter);
-}
+    data = data.filter((item) => item.priority === currentPriorityFilter);
+  }
 
-  tableContainer.innerHTML = `
-  <div class="shadow-[0_4px_20px_rgba(0,0,0,0.06)] rounded-2xl">
-    ${renderTableWithPaging(
-      currentType === "guest" ? guestHeader : memberHeader,
-      data
-    )}
-  </div>
-`;
+  tableContainer.innerHTML = renderTableWithPaging(
+    currentType === "guest" ? guestHeader : memberHeader,
+    data
+  );
 }
 
 function handleSearch() {
@@ -691,16 +537,16 @@ async function saveNote(id) {
     const token = localStorage.getItem("token");
     const note = document.getElementById("noteInput").value;
 
-    const res = await fetch("http://localhost:3000/api/notes", {
+    const res = await fetch("/api/notes", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: "Bearer " + token
+        Authorization: "Bearer " + token,
       },
       body: JSON.stringify({
         customerId: Number(id),
-        note
-      })
+        note,
+      }),
     });
 
     if (!res.ok) throw new Error();
@@ -710,7 +556,6 @@ async function saveNote(id) {
 
     // reload lại từ DB
     await fetchCRM();
-
   } catch (err) {
     showToast("Có lỗi xảy ra", "error");
   }
@@ -890,6 +735,106 @@ function renderPopup() {
     </div>
   `;
 }
+
+function crmColStyle(col) {
+  const width = col.width || "";
+  const base =
+    "font-size:12px;color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;";
+  const body =
+    "font-size:13px;color:#0f172a;font-weight:500;text-transform:none;letter-spacing:0;";
+
+  // Dùng chung cho header và body hơi khó vì function này đang dùng cả 2 nơi.
+  // Nên ưu tiên width trước, còn màu body sẽ được row override nhẹ.
+  if (width.includes("220")) return `width:26%;${body}`;
+  if (width.includes("180")) return `width:16%;${body}text-align:center;`;
+  if (width.includes("150")) return `width:16%;${body}text-align:center;`;
+  if (width.includes("160")) return `width:16%;${body}text-align:center;`;
+  if (width.includes("140")) return `width:14%;${body}text-align:center;`;
+  if (width.includes("120")) return `width:13%;${body}text-align:center;`;
+  if (width.includes("110")) return `width:12%;${body}text-align:center;`;
+  return `width:8%;${body}text-align:center;`;
+}
+
+function renderTagDropdown() {
+  const tags = [
+    { label: "Tất cả", value: "all" },
+    { label: "Tiềm năng", value: "Tiềm năng" },
+    { label: "Hết hạn", value: "Hết hạn" },
+    { label: "Cần chăm sóc", value: "Cần chăm sóc" },
+    { label: "Sắp hết hạn", value: "Sắp hết hạn" },
+    { label: "Ổn định", value: "Ổn định" },
+    { label: "Ít giá trị", value: "Ít giá trị" },
+  ];
+
+  return `
+    <div id="tagDropdown"
+      style="display:none;position:absolute;top:30px;left:50%;transform:translateX(-50%);background:#fff;border:1px solid #e2e8f0;
+             box-shadow:0 12px 30px rgba(15,23,42,0.16);border-radius:10px;padding:6px;width:150px;
+             z-index:999;max-height:260px;overflow:auto;text-transform:none;letter-spacing:0;text-align:left;">
+      ${tags
+        .map(
+          (tag) => `
+        <button onclick="event.stopPropagation();setTagFilter('${tag.value}')"
+          style="display:block;width:100%;text-align:left;padding:8px 10px;border:none;border-radius:8px;
+                 background:${
+                   currentTagFilter === tag.value ? "#eff6ff" : "transparent"
+                 };
+                 color:${
+                   currentTagFilter === tag.value ? "#2563eb" : "#334155"
+                 };
+                 font-size:13px;font-weight:${
+                   currentTagFilter === tag.value ? "700" : "500"
+                 };
+                 line-height:1.3;cursor:pointer;">
+          ${tag.label}
+        </button>`
+        )
+        .join("")}
+    </div>`;
+}
+
+function renderPriorityDropdown() {
+  const options = [
+    { label: "Tất cả", value: "all" },
+    { label: "Very High", value: "very_high" },
+    { label: "High", value: "high" },
+    { label: "Medium", value: "medium" },
+    { label: "Low", value: "low" },
+  ];
+
+  return `
+    <div id="priorityDropdown"
+      style="display:none;position:absolute;top:30px;left:50%;transform:translateX(-50%);
+             background:#fff;border:1px solid #e2e8f0;
+             box-shadow:0 12px 30px rgba(15,23,42,0.16);border-radius:10px;
+             padding:6px;width:135px;z-index:999;max-height:240px;overflow:auto;
+             text-transform:none;letter-spacing:0;text-align:left;">
+      ${options
+        .map(
+          (opt) => `
+        <button onclick="event.stopPropagation();setPriorityFilter('${
+          opt.value
+        }')"
+          style="display:block;width:100%;text-align:left;padding:8px 10px;border:none;border-radius:8px;
+                 background:${
+                   currentPriorityFilter === opt.value
+                     ? "#eff6ff"
+                     : "transparent"
+                 };
+                 color:${
+                   currentPriorityFilter === opt.value ? "#2563eb" : "#334155"
+                 };
+                 font-size:13px;font-weight:${
+                   currentPriorityFilter === opt.value ? "700" : "500"
+                 };
+                 text-transform:none;letter-spacing:0;line-height:1.3;cursor:pointer;">
+          ${opt.label}
+        </button>`
+        )
+        .join("")}
+    </div>`;
+}
+
 function showToast(message, type = "success") {
   const toast = document.createElement("div");
 
@@ -911,24 +856,45 @@ function showToast(message, type = "success") {
 // ===== TAG =====
 function toggleTagDropdown(e) {
   e.stopPropagation();
-  document.getElementById("tagDropdown").classList.toggle("hidden");
+
+  const tag = document.getElementById("tagDropdown");
+  const priority = document.getElementById("priorityDropdown");
+
+  if (priority) priority.style.display = "none";
+  if (tag) tag.style.display = tag.style.display === "block" ? "none" : "block";
 }
 
 function setTagFilter(value) {
   currentTagFilter = value;
-  document.getElementById("tagDropdown").classList.add("hidden");
+  currentPage = 1;
+
+  const el = document.getElementById("tagDropdown");
+  if (el) el.style.display = "none";
+
   renderTable();
 }
 
 // ===== PRIORITY =====
 function togglePriorityDropdown(e) {
   e.stopPropagation();
-  document.getElementById("priorityDropdown").classList.toggle("hidden");
+
+  const tag = document.getElementById("tagDropdown");
+  const priority = document.getElementById("priorityDropdown");
+
+  if (tag) tag.style.display = "none";
+  if (priority) {
+    priority.style.display =
+      priority.style.display === "block" ? "none" : "block";
+  }
 }
 
 function setPriorityFilter(value) {
   currentPriorityFilter = value;
-  document.getElementById("priorityDropdown").classList.add("hidden");
+  currentPage = 1;
+
+  const el = document.getElementById("priorityDropdown");
+  if (el) el.style.display = "none";
+
   renderTable();
 }
 
@@ -936,9 +902,8 @@ function setPriorityFilter(value) {
 document.addEventListener("click", () => {
   const t = document.getElementById("tagDropdown");
   const p = document.getElementById("priorityDropdown");
-
-  if (t) t.classList.add("hidden");
-  if (p) p.classList.add("hidden");
+  if (t) t.style.display = "none";
+  if (p) p.style.display = "none";
 });
 
 function selectRow(id) {

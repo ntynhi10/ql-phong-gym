@@ -20,7 +20,6 @@ const getPackages = async (req, res) => {
 
 const createPackage = async (req, res) => {
   try {
-
     const { packageName, durationMonths, price, description } = req.body;
 
     if (!packageName || !durationMonths || price === undefined) {
@@ -53,8 +52,6 @@ const createPackage = async (req, res) => {
 
 const updatePackage = async (req, res) => {
   try {
-
-
     const id = Number(req.params.id);
     const { packageName, durationMonths, price, description } = req.body;
 
@@ -82,15 +79,28 @@ const updatePackage = async (req, res) => {
 
 const togglePackageStatus = async (req, res) => {
   try {
-
     const id = Number(req.params.id);
     const { isActive } = req.body;
 
+    if (typeof isActive !== "boolean") {
+      return res.status(400).json({
+        message: "Trạng thái gói tập không hợp lệ",
+      });
+    }
+
+    const existingPackage = await prisma.package.findUnique({
+      where: { id },
+    });
+
+    if (!existingPackage) {
+      return res.status(404).json({
+        message: "Không tìm thấy gói tập",
+      });
+    }
+
     const updatedPackage = await prisma.package.update({
       where: { id },
-      data: {
-        isActive: Boolean(isActive),
-      },
+      data: { isActive },
     });
 
     return res.json({

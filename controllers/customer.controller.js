@@ -1,6 +1,6 @@
 const prisma = require("../models/prisma");
 
-// 🔥 GET ALL
+// GET ALL
 const getCustomers = async (req, res) => {
   try {
     const customers = await prisma.customer.findMany({
@@ -25,7 +25,7 @@ const getCustomers = async (req, res) => {
   }
 };
 
-// 🔥 GET BY ID
+// GET BY ID
 const getCustomerById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -49,7 +49,7 @@ const getCustomerById = async (req, res) => {
   }
 };
 
-// 🔥 CREATE
+// CREATE
 const createCustomer = async (req, res) => {
   try {
     const { fullName, phone, gender } = req.body;
@@ -87,7 +87,7 @@ const createCustomer = async (req, res) => {
   }
 };
 
-// 🔥 UPDATE
+// UPDATE
 const updateCustomer = async (req, res) => {
   try {
     const { id } = req.params;
@@ -114,17 +114,41 @@ const updateCustomer = async (req, res) => {
   }
 };
 
-// 🔥 DELETE
+// DELETE
 const deleteCustomer = async (req, res) => {
   try {
-    const { id } = req.params;
+    const id = Number(req.params.id);
 
-    await prisma.customer.delete({
-      where: { id: Number(id) },
+    const customer = await prisma.customer.findUnique({
+      where: { id },
     });
 
+    if (!customer) {
+      return res.status(404).json({
+        message: "Không tìm thấy khách hàng",
+      });
+    }
+
+    await prisma.$transaction([
+      prisma.customerNote.deleteMany({
+        where: { customerId: id },
+      }),
+      prisma.feedback.deleteMany({
+        where: { customerId: id },
+      }),
+      prisma.checkin.deleteMany({
+        where: { customerId: id },
+      }),
+      prisma.subscription.deleteMany({
+        where: { customerId: id },
+      }),
+      prisma.customer.delete({
+        where: { id },
+      }),
+    ]);
+
     res.json({
-      message: "Xoá thành công",
+      message: "Xoá khách hàng thành công",
     });
   } catch (error) {
     res.status(500).json({
@@ -133,7 +157,6 @@ const deleteCustomer = async (req, res) => {
     });
   }
 };
-
 const getCustomerDetail = async (req, res) => {
   try {
     const id = Number(req.params.id);

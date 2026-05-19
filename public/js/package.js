@@ -3,6 +3,7 @@ let selectedPackageId = null;
 let isCreating = false;
 let isEditingPackage = false;
 let descriptionTouched = false;
+let confirmCallback = null;
 
 document.addEventListener("DOMContentLoaded", () => {
   const token = localStorage.getItem("token");
@@ -12,6 +13,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   document.getElementById("app").innerHTML = renderLayout(renderPackagePage());
+  document.getElementById("modal-root").innerHTML = renderConfirmModal();
   initMenuEvent();
   fetchPackages();
 });
@@ -356,6 +358,7 @@ function cancelPackageEdit() {
 }
 
 async function savePackage() {
+  const wasCreating = isCreating;
   const packageName = document.getElementById("package-name").value.trim();
   const durationMonths = Number(
     document.getElementById("package-months").value
@@ -409,7 +412,7 @@ async function savePackage() {
     selectedPackageId = result.data?.id || selectedPackageId;
 
     showToast(
-      isCreating ? "Thêm gói tập thành công!" : "Cập nhật gói tập thành công!"
+      wasCreating ? "Thêm gói tập thành công!" : "Cập nhật gói tập thành công!"
     );
 
     await fetchPackages();
@@ -421,12 +424,15 @@ async function savePackage() {
 
 function togglePackageActive(id, isActive) {
   openConfirm(
+    isActive ? "Kích hoạt lại gói tập này?" : "Ngừng sử dụng gói tập này?",
     isActive
-      ? "Kích hoạt lại gói tập này?"
-      : "Ngừng sử dụng gói tập này? Khách mới sẽ không chọn được gói này nữa.",
+      ? "Gói này sẽ hiển thị lại khi thêm khách hàng hoặc gia hạn."
+      : "Khách mới sẽ không chọn được gói này nữa, nhưng lịch sử đăng ký cũ vẫn được giữ.",
     async () => {
       await submitTogglePackageActive(id, isActive);
-    }
+    },
+    isActive ? "Kích hoạt lại" : "Ngừng sử dụng",
+    isActive ? "#059669" : "#dc2626"
   );
 }
 
@@ -456,4 +462,157 @@ async function submitTogglePackageActive(id, isActive) {
     console.error("Toggle package lỗi:", err);
     showToast("Lỗi kết nối server", "error");
   }
+}
+
+function renderConfirmModal() {
+  return `
+    <div id="confirmModal" style="display:none;position:fixed;inset:0;z-index:300;">
+      <div style="position:absolute;inset:0;background:rgba(0,0,0,0.45);"
+           onclick="closeConfirm()"></div>
+
+      <div id="confirmBox"
+        style="position:fixed;left:50%;top:50%;transform:translate(-50%,-50%) scale(0.98);
+               width:100%;max-width:390px;background:#fff;border-radius:16px;padding:22px;
+               box-shadow:0 20px 60px rgba(0,0,0,0.18);opacity:0;transition:all .18s;">
+        <h3 id="confirmTitle" style="font-size:16px;font-weight:800;color:#0f172a;margin:0 0 8px;">
+          Xác nhận
+        </h3>
+        <p id="confirmMessage" style="font-size:13px;color:#64748b;line-height:1.5;margin:0;">
+          Bạn có chắc chắn muốn thực hiện thao tác này?
+        </p>
+
+        <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:22px;">
+          <button onclick="closeConfirm()"
+            style="height:38px;padding:0 16px;border:none;border-radius:10px;background:#f1f5f9;
+                   color:#475569;font-size:13px;font-weight:700;cursor:pointer;">
+            Hủy
+          </button>
+          <button id="confirmActionBtn" onclick="submitConfirmAction()"
+            style="height:38px;padding:0 18px;border:none;border-radius:10px;background:#dc2626;
+                   color:#fff;font-size:13px;font-weight:800;cursor:pointer;
+                   box-shadow:0 2px 8px rgba(220,38,38,0.25);">
+            Xác nhận
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function openConfirm(
+  title,
+  message,
+  callback,
+  confirmText = "Xác nhận",
+  color = "#2563eb"
+) {
+  confirmCallback = callback;
+
+  document.getElementById("confirmTitle").innerText = title;
+  document.getElementById("confirmMessage").innerText = message;
+
+  const btn = document.getElementById("confirmActionBtn");
+  btn.innerText = confirmText;
+  btn.style.background = color;
+  btn.disabled = false;
+  btn.style.opacity = "1";
+
+  const modal = document.getElementById("confirmModal");
+  const box = document.getElementById("confirmBox");
+
+  modal.style.display = "block";
+  box.style.opacity = "0";
+  box.style.transform = "translate(-50%,-50%) scale(0.98)";
+
+  requestAnimationFrame(() => {
+    box.style.opacity = "1";
+    box.style.transform = "translate(-50%,-50%) scale(1)";
+  });
+}
+
+function closeConfirm() {
+  const modal = document.getElementById("confirmModal");
+  const box = document.getElementById("confirmBox");
+
+  box.style.opacity = "0";
+  box.style.transform = "translate(-50%,-50%) scale(0.98)";
+
+  setTimeout(() => {
+    modal.style.display = "none";
+    confirmCallback = null;
+  }, 180);
+}
+
+async function submitConfirmAction() {
+  if (!confirmCallback) return;
+
+  const btn = document.getElementById("confirmActionBtn");
+  const callback = confirmCallback;
+
+  btn.disabled = true;
+  btn.style.opacity = "0.65";
+
+  try {
+    await callback();
+    closeConfirm();
+  } catch (err) {
+    console.error("Confirm action lỗi:", err);
+
+    if (typeof showToast === "function") {
+      showToast("Thao tác thất bại", "error");
+    } else {
+      alert("Thao tác thất bại");
+    }
+
+    btn.disabled = false;
+    btn.style.opacity = "1";
+  }
+}
+
+function showToast(message, type = "success") {
+  const existing = document.getElementById("toast");
+  if (existing) existing.remove();
+
+  const bg =
+    {
+      success: "#059669",
+      error: "#dc2626",
+      info: "#2563eb",
+    }[type] || "#059669";
+
+  const icon =
+    type === "error"
+      ? `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>`
+      : `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>`;
+
+  const toast = document.createElement("div");
+  toast.id = "toast";
+  toast.style.cssText = `
+    position:fixed;bottom:24px;right:24px;z-index:9999;
+    display:flex;align-items:center;gap:10px;
+    background:${bg};color:#fff;font-size:13px;font-weight:600;
+    padding:12px 18px;border-radius:14px;
+    box-shadow:0 4px 20px rgba(0,0,0,0.15);
+    transition:all 0.2s;opacity:0;transform:translateY(8px);
+  `;
+
+  toast.innerHTML = `
+    <svg width="16" height="16" fill="none" stroke="#fff" viewBox="0 0 24 24">
+      ${icon}
+    </svg>
+    <span>${message}</span>
+  `;
+
+  document.body.appendChild(toast);
+
+  requestAnimationFrame(() => {
+    toast.style.opacity = "1";
+    toast.style.transform = "translateY(0)";
+  });
+
+  setTimeout(() => {
+    toast.style.opacity = "0";
+    toast.style.transform = "translateY(8px)";
+    setTimeout(() => toast.remove(), 200);
+  }, 3000);
 }

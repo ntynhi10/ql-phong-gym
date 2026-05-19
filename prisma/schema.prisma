@@ -61,17 +61,10 @@ model Subscription {
   paidAt     DateTime?
 
   customerId Int
-<<<<<<< HEAD
-  packageId  Int?   // 👈 OPTIONAL
+  packageId  Int?
 
   customer   Customer @relation(fields: [customerId], references: [id])
-  package    Package? @relation(fields: [packageId], references: [id]) // 👈 OPTIONAL
-=======
-  packageId  Int?  
-
-  customer   Customer @relation(fields: [customerId], references: [id])
-  package    Package? @relation(fields: [packageId], references: [id]) 
->>>>>>> origin/feature/customer-management
+  package    Package? @relation(fields: [packageId], references: [id])
 
   createdAt  DateTime @default(now())
 

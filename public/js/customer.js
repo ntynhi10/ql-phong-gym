@@ -24,19 +24,37 @@ function formatGender(g) {
   return "Khác";
 }
 
+function getLatestPackageSub(c) {
+  if (!c.subscriptions || c.subscriptions.length === 0) return null;
+
+  return (
+    [...c.subscriptions]
+      .filter((s) => s.packageId != null && s.package)
+      .sort(
+        (a, b) =>
+          new Date(b.endDate) - new Date(a.endDate) ||
+          new Date(b.startDate) - new Date(a.startDate)
+      )[0] || null
+  );
+}
+
 function getType(c) {
-  if (!c.subscriptions || c.subscriptions.length === 0) return "Vãng lai";
-  const active = c.subscriptions.find((s) => s.status === "active");
-  if (!active) return "Hết hạn";
-  if (!active.package) return "Vãng lai";
+  const latestSub = getLatestPackageSub(c);
+  if (!latestSub) return "Vãng lai";
+
+  const now = new Date();
+
+  if (new Date(latestSub.endDate) < now) return "Hết hạn";
+
   return "Hội viên";
 }
 
 function getPackage(c) {
-  if (!c.subscriptions) return "-";
-  const active = c.subscriptions.find((s) => s.status === "active");
-  if (!active || !active.package) return "-";
-  return active.package.packageName;
+  const latestSub = getLatestPackageSub(c);
+
+  if (!latestSub || !latestSub.package) return "-";
+
+  return latestSub.package.packageName;
 }
 
 // ================= FILTER =================
