@@ -1,5 +1,5 @@
 let currentPage = 1;
-const pageSize = 10;
+const pageSize = 8;
 let currentType = "guest";
 let currentData = [];
 let isSearching = false;

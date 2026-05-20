@@ -27,7 +27,7 @@ async function fetchDashboard() {
   const token = localStorage.getItem("token");
 
   try {
-    const res = await fetch("http://localhost:3000/api/dashboard", {
+    const res = await fetch("api/dashboard", {
       headers: {
         Authorization: "Bearer " + token,
       },
