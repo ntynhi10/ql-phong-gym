@@ -22,7 +22,7 @@ const subPageSize = 5;
 let activeHistoryTab = "subscription";
 let checkinHistory = [];
 let checkinCurrentPage = 1;
-const checkinPageSize = 5;
+const checkinPageSize = 3;
 
 // ================= INIT =================
 document.addEventListener("DOMContentLoaded", () => {
